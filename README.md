@@ -17,7 +17,7 @@ Follow these steps to set up your local development environment:
 ### 1. Clone the Repository
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/Rifaque/querycraft-frontend.git
 cd querycraft-frontend
 ```
 
