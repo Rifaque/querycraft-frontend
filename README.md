@@ -1,4 +1,4 @@
-# QueryCraft - Frontend (staging)
+# QueryCraft - Frontend
 
 A Next.js frontend application with Tailwind CSS for the QueryCraft platform.
 
