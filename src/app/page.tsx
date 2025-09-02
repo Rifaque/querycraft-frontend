@@ -4,7 +4,8 @@ import { useState, useEffect } from "react";
 import { IntroPage } from "@/components/pages/IntroPage";
 import { AuthPage } from "@/components/pages/AuthPage";
 import { ChatApp } from "@/components/pages/ChatApp";
-import { toast } from "@/components/ui/sonner";
+import { toast } from "sonner";
+//import { toast } from "@/components/ui/sonner";
 
 // Define the structure for the user's profile
 interface UserProfile {
