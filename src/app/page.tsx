@@ -1,103 +1,119 @@
-import Image from "next/image";
+'use client';
+
+import { useState, useEffect } from "react";
+import { IntroPage } from "@/components/pages/IntroPage";
+import { AuthPage } from "@/components/pages/AuthPage";
+import { ChatApp } from "@/components/pages/ChatApp";
+import { toast } from "sonner";
+//import { toast } from "@/components/ui/sonner";
+
+// Define the structure for the user's profile
+interface UserProfile {
+  name: string;
+  email: string;
+  avatar?: string;
+  preferences: {
+    theme: 'light' | 'dark' | 'system';
+    notifications: boolean;
+    autoSave: boolean;
+    defaultModel: string;
+  };
+}
+
+// Define the possible views the app can be in
+type AppView = 'intro' | 'auth' | 'chat';
 
 export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your change instantly.
-          </li>
-        </ol>
+  // State to track if the user is logged in
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  // State to control which page component is shown
+  const [currentView, setCurrentView] = useState<AppView>('intro');
+  
+  // Mock user profile data, just like in the original file
+  const [userProfile, setUserProfile] = useState<UserProfile>({
+    name: "QueryCraft User",
+    email: "user@querycraft.ai",
+    avatar: "https://images.unsplash.com/photo-1615843423179-bea071facf96?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx8fDE3NTY3MDA4MjR8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
+    preferences: {
+      theme: 'system',
+      notifications: true,
+      autoSave: true,
+      defaultModel: 'merlin'
+    }
+  });
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+  // Automatically switch to the chat view when the user logs in
+  useEffect(() => {
+    if (isAuthenticated) {
+      setCurrentView('chat');
+    } else {
+      // When logging out, go back to the intro page
+      setCurrentView('intro');
+    }
+  }, [isAuthenticated]);
+
+  // --- Handlers to switch between views ---
+  const handleShowAuth = () => setCurrentView('auth');
+  const handleBackToIntro = () => setCurrentView('intro');
+
+  // --- Mock Authentication Logic ---
+  const handleLogin = (email: string, password: string) => {
+    if (email && password) {
+      setUserProfile(prev => ({ ...prev, email: email }));
+      setIsAuthenticated(true);
+      toast("Successfully logged in", {
+        description: "Welcome back to QueryCraft!",
+      });
+    } else {
+      toast.error("Login failed", {
+        description: "Please check your email and password.",
+      });
+    }
+  };
+
+  const handleSignUp = (name: string, email: string, password: string) => {
+    if (name && email && password) {
+      setUserProfile(prev => ({ ...prev, name: name, email: email }));
+      setIsAuthenticated(true);
+      toast.success("Account created successfully", {
+        description: "Welcome to QueryCraft!",
+      });
+    } else {
+      toast.error("Sign up failed", {
+        description: "Please fill in all required fields.",
+      });
+    }
+  };
+  
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    toast("Successfully logged out");
+  };
+
+  // --- Profile Update Logic ---
+  const handleUpdateProfile = (profile: UserProfile) => {
+    setUserProfile(profile);
+    toast.success("Profile updated successfully");
+  };
+
+  // --- Render Logic ---
+  const renderCurrentView = () => {
+    switch (currentView) {
+      case 'intro':
+        return <IntroPage onShowAuth={handleShowAuth} />;
+      case 'auth':
+        return <AuthPage onLogin={handleLogin} onSignUp={handleSignUp} onBack={handleBackToIntro} />;
+      case 'chat':
+        return <ChatApp userProfile={userProfile} onUpdateProfile={handleUpdateProfile} onLogout={handleLogout} />;
+      default:
+        return <IntroPage onShowAuth={handleShowAuth} />;
+    }
+  };
+
+  return (
+    <main>
+      {renderCurrentView()}
+    </main>
   );
 }
+
