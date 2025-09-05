@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from "react";
-import { Upload, FileText, Database, X } from "lucide-react";
+import { Upload, FileText, Database } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";

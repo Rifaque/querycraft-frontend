@@ -8,7 +8,7 @@ import { DatabaseImportDialog } from "@/components/modals/DatabaseImportDialog";
 import { ChatSidebar } from "@/components/layout/ChatSidebar";
 import { MobileSidebarTrigger } from "@/components/layout/MobileSidebarTrigger";
 import { SettingsDialog } from "@/components/modals/SettingsDialog";
-import { toast } from "@/components/ui/sonner";
+// import { toast } from "@/components/ui/sonner";
 
 // Define the structure for messages, sessions, and user profiles
 interface Message {

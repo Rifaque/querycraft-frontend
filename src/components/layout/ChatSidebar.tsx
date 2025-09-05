@@ -1,12 +1,12 @@
 'use client';
 
 import { useState } from "react";
-import { MessageSquare, Trash2, Plus, Calendar, X, User, LogOut, Settings, LogIn } from "lucide-react";
+import { MessageSquare, Trash2, Plus, X, User, LogOut, Settings, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Badge } from "@/components/ui/badge";
+// import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Separator } from "@/components/ui/separator";
+// import { Separator } from "@/components/ui/separator";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 // Note: The LoginDialog is not a standard UI component, we will create it later.
 // For now, this line will cause an error.
