@@ -9,7 +9,6 @@ export type ServerUser = {
   email: string;
   role?: string;
   createdAt?: string;
-  // any other fields from server
 };
 
 export type UserProfile = {
@@ -25,9 +24,9 @@ export type UserProfile = {
   _id?: string;
   role?: string;
   createdAt?: string;
-};
+} | null;
 
-function mapServerUserToUserProfile(serverUser: ServerUser | null): UserProfile | null {
+function mapServerUserToUserProfile(serverUser: ServerUser | null | undefined): UserProfile {
   if (!serverUser) return null;
   return {
     name: serverUser.name,
@@ -45,11 +44,6 @@ function mapServerUserToUserProfile(serverUser: ServerUser | null): UserProfile 
   };
 }
 
-/**
- * useAutoLogin
- * - onSuccess: callback(userProfile) when token + user are validated
- * - onFailure: optional callback when validation fails
- */
 export function useAutoLogin(onSuccess: (u: UserProfile) => void, onFailure?: () => void) {
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -58,23 +52,22 @@ export function useAutoLogin(onSuccess: (u: UserProfile) => void, onFailure?: ()
     const rawUser = localStorage.getItem('qc_user');
 
     if (!token || !rawUser) {
-      // nothing to validate
-      if (onFailure) onFailure();
+      onFailure?.();
       return;
     }
 
-    let parsedUser: unknown;
     try {
-      parsedUser = JSON.parse(rawUser);
-    } catch (err) {
-      // invalid cached user: clean
+      JSON.parse(rawUser);
+    } catch {
       localStorage.removeItem('qc_user');
       localStorage.removeItem('qc_token');
-      if (onFailure) onFailure();
+      onFailure?.();
       return;
     }
 
-    // Validate token by calling server
+    const controller = new AbortController();
+    const { signal } = controller;
+
     (async () => {
       try {
         const res = await fetch(`${API_BASE}/api/auth/me`, {
@@ -82,37 +75,56 @@ export function useAutoLogin(onSuccess: (u: UserProfile) => void, onFailure?: ()
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`
-          }
+          },
+          signal
         });
 
         if (!res.ok) {
-          // token invalid or expired: clear local storage
           localStorage.removeItem('qc_user');
           localStorage.removeItem('qc_token');
-          if (onFailure) onFailure();
+          onFailure?.();
           return;
         }
 
-        const body = await res.json();
-        const serverUser: ServerUser | undefined = body?.user;
-        if (!serverUser) {
+        const body = await res.json() as unknown;
+        let serverUserObj: Record<string, unknown> | undefined;
+
+        if (body && typeof body === 'object') {
+          const bodyObj = body as Record<string, unknown>;
+          if ('user' in bodyObj && typeof bodyObj.user === 'object') {
+            serverUserObj = bodyObj.user as Record<string, unknown>;
+          } else {
+            serverUserObj = bodyObj;
+          }
+        }
+
+        if (!serverUserObj) {
           localStorage.removeItem('qc_user');
           localStorage.removeItem('qc_token');
-          if (onFailure) onFailure();
+          onFailure?.();
           return;
         }
 
-        // Save up-to-date user in localStorage (optional)
-        localStorage.setItem('qc_user', JSON.stringify(serverUser));
+        try {
+          localStorage.setItem('qc_user', JSON.stringify(serverUserObj));
+        } catch {
+          // ignore
+        }
 
-        // Map and call success handler
-        const profile = mapServerUserToUserProfile(serverUser)!;
+        const profile = mapServerUserToUserProfile(serverUserObj as unknown as ServerUser);
         onSuccess(profile);
       } catch (err) {
-        // network or other error — do not log user in automatically
-        console.error('[useAutoLogin] validation error', err);
-        if (onFailure) onFailure();
+        if (!signal.aborted) {
+          onFailure?.();
+        }
+        // still helpful to log the error for debugging
+        // eslint-disable-next-line no-console
+        console.error(err);
       }
     })();
-  }, []);
+
+    return () => {
+      controller.abort();
+    };
+  }, [onSuccess, onFailure]);
 }

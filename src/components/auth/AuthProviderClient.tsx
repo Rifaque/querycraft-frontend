@@ -3,16 +3,27 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
-// If you already created useAutoLogin from earlier message, import it.
-// Otherwise I included a tiny inline validateToken function below for completeness.
-import { useAutoLogin as useProvidedAutoLogin, UserProfile as ProvidedUserProfile } from '@/hooks/useAutoLogin';
+type Preferences = {
+  theme: 'light' | 'dark' | 'system';
+  notifications: boolean;
+  autoSave: boolean;
+  defaultModel: string;
+};
 
-type UserProfile = ProvidedUserProfile | null;
+export type UserProfile = {
+  name: string;
+  email: string;
+  avatar?: string | null;
+  preferences: Preferences;
+  _id?: string;
+  role?: string;
+  createdAt?: string;
+} | null;
 
 interface AuthContextShape {
   user: UserProfile;
   loading: boolean;
-  login: (token: string, userObj: object) => void; // quick client login (sets localStorage + context)
+  login: (token: string, userObj: Partial<ServerUser>) => void;
   logout: () => void;
 }
 
@@ -24,25 +35,56 @@ export function useAuth() {
   return ctx;
 }
 
-/**
- * If you already implemented useAutoLogin in /hooks/useAutoLogin, this provider will call it.
- * If not, the internal validateToken() function below will call /api/auth/me directly.
- */
+interface ServerUser {
+  name?: string | null;
+  email?: string | null;
+  avatar?: string | null;
+  defaultModel?: string | null;
+  _id?: string | null;
+  role?: string | null;
+  createdAt?: string | null;
+  [k: string]: unknown;
+}
+
+const DEFAULT_PREFERENCES: Preferences = {
+  theme: 'system',
+  notifications: true,
+  autoSave: true,
+  defaultModel: 'qwen:4b'
+};
+
+function normalizeServerUser(u: Partial<ServerUser> | null | undefined): UserProfile {
+  if (!u) return null;
+  const name = (u.name ?? '') as string;
+  const email = (u.email ?? '') as string;
+  if (!name && !email) return null;
+
+  const prefs: Preferences = {
+    ...DEFAULT_PREFERENCES,
+    defaultModel: (u.defaultModel as string) ?? DEFAULT_PREFERENCES.defaultModel
+  };
+
+  return {
+    name: name || (email ?? 'Unknown user'),
+    email: email || 'unknown@example.com',
+    avatar: (u.avatar ?? null) as string | null,
+    preferences: prefs,
+    _id: u._id ?? undefined,
+    role: u.role ?? undefined,
+    createdAt: u.createdAt ?? undefined
+  };
+}
+
 export default function AuthProviderClient({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<UserProfile>(null);
   const [loading, setLoading] = useState(true);
 
-  // If you have the hook we discussed earlier, prefer that:
-  // useProvidedAutoLogin(
-  //   (profile) => { setUser(profile); setLoading(false); },
-  //   () => { setUser(null); setLoading(false); }
-  // );
-
-  // Minimal inline validation (equivalent of useAutoLogin)
   useEffect(() => {
     let mounted = true;
+
     (async () => {
       if (typeof window === 'undefined') return;
+
       const token = localStorage.getItem('qc_token');
       const rawUser = localStorage.getItem('qc_user');
 
@@ -54,19 +96,22 @@ export default function AuthProviderClient({ children }: { children: React.React
         return;
       }
 
-      // Try parsing cached user (we'll still validate token with server)
+      // Try parsing cached user safely
+      let cached: Partial<ServerUser> | null = null;
       try {
         const parsed = JSON.parse(rawUser);
-        // optimistic set while verifying (optional)
-        if (mounted) setUser({
-          ...(parsed as object),
-          preferences: (parsed as any).preferences ?? {
-            theme: 'system',
-            notifications: true,
-            autoSave: true,
-            defaultModel: 'qwen:4b'
+        if (typeof parsed === 'object' && parsed !== null) {
+          cached = parsed as Partial<ServerUser>;
+          if (mounted) setUser(normalizeServerUser(cached));
+        } else {
+          localStorage.removeItem('qc_user');
+          localStorage.removeItem('qc_token');
+          if (mounted) {
+            setUser(null);
+            setLoading(false);
           }
-        } as any);
+          return;
+        }
       } catch {
         localStorage.removeItem('qc_user');
         localStorage.removeItem('qc_token');
@@ -77,17 +122,18 @@ export default function AuthProviderClient({ children }: { children: React.React
         return;
       }
 
+      // Validate token with server (defensive)
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE || ''}/api/auth/me`, {
+        const base = process.env.NEXT_PUBLIC_API_BASE ?? '';
+        const res = await fetch(`${base}/api/auth/me`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${localStorage.getItem('qc_token')}`
+            Authorization: `Bearer ${localStorage.getItem('qc_token') ?? ''}`
           }
         });
 
         if (!res.ok) {
-          // invalid token
           localStorage.removeItem('qc_user');
           localStorage.removeItem('qc_token');
           if (mounted) {
@@ -97,9 +143,20 @@ export default function AuthProviderClient({ children }: { children: React.React
           return;
         }
 
-        const body = await res.json();
-        const serverUser = body?.user;
-        if (!serverUser) {
+        // parse and normalize server response (type-safe)
+        const body = (await res.json()) as unknown;
+        let serverUserObj: Record<string, unknown> | undefined;
+
+        if (body && typeof body === 'object') {
+          const bodyObj = body as Record<string, unknown>;
+          if ('user' in bodyObj && typeof bodyObj.user === 'object') {
+            serverUserObj = bodyObj.user as Record<string, unknown>;
+          } else {
+            serverUserObj = bodyObj;
+          }
+        }
+
+        if (!serverUserObj || typeof serverUserObj !== 'object') {
           localStorage.removeItem('qc_user');
           localStorage.removeItem('qc_token');
           if (mounted) {
@@ -109,28 +166,20 @@ export default function AuthProviderClient({ children }: { children: React.React
           return;
         }
 
-        // Normalize to your app UserProfile shape (minimal)
-        const mapped = {
-          name: serverUser.name,
-          email: serverUser.email,
-          avatar: (serverUser as any).avatar,
-          preferences: {
-            theme: 'system',
-            notifications: true,
-            autoSave: true,
-            defaultModel: (serverUser as any).defaultModel || 'qwen:4b'
-          },
-          _id: serverUser._id,
-          role: serverUser.role,
-          createdAt: serverUser.createdAt
-        } as any;
+        const mapped = normalizeServerUser(serverUserObj as Partial<ServerUser>);
 
-        localStorage.setItem('qc_user', JSON.stringify(serverUser)); // refresh cached user
+        try {
+          localStorage.setItem('qc_user', JSON.stringify(serverUserObj));
+        } catch {
+          // ignore localStorage set failures
+        }
+
         if (mounted) {
           setUser(mapped);
           setLoading(false);
         }
       } catch (err) {
+        // network / unexpected error -> fall back to unauthenticated
         console.error('[AuthProvider] token validation error', err);
         if (mounted) {
           setUser(null);
@@ -144,30 +193,28 @@ export default function AuthProviderClient({ children }: { children: React.React
     };
   }, []);
 
-  // Call to log in: store token + user and set context
-  const login = (token: string, userObj: object) => {
-    localStorage.setItem('qc_token', token);
-    localStorage.setItem('qc_user', JSON.stringify(userObj));
-    setUser((prev) => ({
-      ...((userObj as any) || {}),
-      preferences: (userObj as any).preferences ?? {
-        theme: 'system',
-        notifications: true,
-        autoSave: true,
-        defaultModel: 'qwen:4b'
-      }
-    } as any));
+  const login = (token: string, userObj: Partial<ServerUser>) => {
+    try {
+      localStorage.setItem('qc_token', token);
+      localStorage.setItem('qc_user', JSON.stringify(userObj ?? {}));
+    } catch {
+      // ignore localStorage set errors
+    }
+    setUser(normalizeServerUser(userObj ?? null));
   };
 
   const logout = () => {
-    localStorage.removeItem('qc_token');
-    localStorage.removeItem('qc_user');
+    try {
+      localStorage.removeItem('qc_token');
+      localStorage.removeItem('qc_user');
+    } catch {
+      // ignore
+    }
     setUser(null);
   };
 
   return (
     <AuthContext.Provider value={{ user, loading, login, logout }}>
-      {/* While loading, you can render a global spinner or skeleton */}
       {loading ? (
         <div className="h-screen w-full flex items-center justify-center">
           <div className="text-sm opacity-80">Validating session…</div>

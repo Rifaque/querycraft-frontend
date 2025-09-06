@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useState, useEffect } from "react";
 import { IntroPage } from "@/components/pages/IntroPage";
@@ -23,7 +23,6 @@ interface UserProfile {
 type AppView = 'intro' | 'auth' | 'chat';
 
 export default function Home() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentView, setCurrentView] = useState<AppView>('intro');
   const [loading, setLoading] = useState(true);
 
@@ -56,22 +55,20 @@ export default function Home() {
           const data = await res.json();
           setUserProfile(prev => ({
             ...prev,
-            name: data.name,
-            email: data.email,
+            name: data.name ?? prev.name,
+            email: data.email ?? prev.email,
+            avatar: (data.avatar ?? prev.avatar),
           }));
-          setIsAuthenticated(true);
           setCurrentView("chat");
         } else {
           localStorage.removeItem("qc_token");
           localStorage.removeItem("qc_user");
-          setIsAuthenticated(false);
           setCurrentView("intro");
         }
       } catch (err) {
         console.error("Auth check failed:", err);
         localStorage.removeItem("qc_token");
         localStorage.removeItem("qc_user");
-        setIsAuthenticated(false);
         setCurrentView("intro");
       } finally {
         setLoading(false);
@@ -96,7 +93,6 @@ export default function Home() {
         localStorage.setItem("qc_token", data.token);
         localStorage.setItem("qc_user", JSON.stringify(data.user));
         setUserProfile(prev => ({ ...prev, name: data.user.name, email: data.user.email }));
-        setIsAuthenticated(true);
         setCurrentView("chat");
         toast.success("Successfully logged in", {
           description: "Welcome back to QueryCraft!",
@@ -124,7 +120,6 @@ export default function Home() {
         localStorage.setItem("qc_token", data.token);
         localStorage.setItem("qc_user", JSON.stringify(data.user));
         setUserProfile(prev => ({ ...prev, name: data.user.name, email: data.user.email }));
-        setIsAuthenticated(true);
         setCurrentView("chat");
         toast.success("Account created successfully", {
           description: "Welcome to QueryCraft!",
@@ -140,7 +135,6 @@ export default function Home() {
   const handleLogout = () => {
     localStorage.removeItem("qc_token");
     localStorage.removeItem("qc_user");
-    setIsAuthenticated(false);
     setCurrentView("intro");
     toast("Successfully logged out");
   };

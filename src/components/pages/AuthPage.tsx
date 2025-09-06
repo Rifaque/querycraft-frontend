@@ -28,6 +28,16 @@ export function AuthPage({ onBack, onLogin, onSignUp }: AuthPageProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const extractErrorMessage = (err: unknown, fallback = "Network error") => {
+    if (err instanceof Error && err.message) return err.message;
+    if (typeof err === "string" && err) return err;
+    try {
+      return JSON.stringify(err) || fallback;
+    } catch {
+      return fallback;
+    }
+  };
+
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
@@ -37,8 +47,8 @@ export function AuthPage({ onBack, onLogin, onSignUp }: AuthPageProps) {
       // call the handler provided by parent (Home)
       await onLogin(loginEmail, loginPassword);
       // parent is responsible for navigation/toasts/persistence
-    } catch (err: any) {
-      setError(err?.message || "Login failed");
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, "Login failed"));
     } finally {
       setLoading(false);
     }
@@ -53,8 +63,8 @@ export function AuthPage({ onBack, onLogin, onSignUp }: AuthPageProps) {
       // call the handler provided by parent (Home)
       await onSignUp(signUpName, signUpEmail, signUpPassword);
       // parent is responsible for navigation/toasts/persistence
-    } catch (err: any) {
-      setError(err?.message || "Signup failed");
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, "Signup failed"));
     } finally {
       setLoading(false);
     }
