@@ -71,6 +71,19 @@ export function ChatSidebar({
     return previewMessage.content.substring(0, 45) + (previewMessage.content.length > 45 ? "..." : "");
   };
 
+  // --- Safe initials/fallback helper ---
+  const getInitials = (profile?: { name?: string; email?: string }) => {
+    const source = (profile?.name ?? profile?.email ?? "").trim();
+    if (!source) return "?";
+    const parts = source.split(/\s+/);
+    if (parts.length >= 2) {
+      const a = parts[0][0] ?? "";
+      const b = parts[1][0] ?? "";
+      return (a + b).toUpperCase();
+    }
+    return source.charAt(0).toUpperCase();
+  };
+
   return (
     <div className="flex flex-col h-full bg-card/95 backdrop-blur-xl border-r border-border">
       <div className="p-4 border-b border-border">
@@ -129,12 +142,14 @@ export function ChatSidebar({
         {isAuthenticated ? (
           <div className="flex items-center space-x-3">
             <Avatar>
-              <AvatarImage src={userProfile.avatar} alt={userProfile.name} />
-              <AvatarFallback>{userProfile.name.charAt(0)}</AvatarFallback>
+              {userProfile?.avatar ? (
+                <AvatarImage src={userProfile.avatar} alt={userProfile?.name ?? userProfile?.email ?? "User"} />
+              ) : null}
+              <AvatarFallback>{getInitials(userProfile)}</AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
-              <p className="font-medium text-sm truncate">{userProfile.name}</p>
-              <p className="text-xs text-muted-foreground truncate">{userProfile.email}</p>
+              <p className="font-medium text-sm truncate">{userProfile?.name ?? userProfile?.email ?? "Unknown user"}</p>
+              <p className="text-xs text-muted-foreground truncate">{userProfile?.email ?? ""}</p>
             </div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

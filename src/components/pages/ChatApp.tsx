@@ -23,6 +23,7 @@ interface ChatSession {
   messages: Message[];
   createdAt: string;
   lastActive: string;
+  isLocal?: boolean;
 }
 
 interface UserProfile {
@@ -109,28 +110,13 @@ function normalizeChat(raw: RawChatFromServer): ChatSession {
     messages,
     createdAt: raw.createdAt || new Date().toISOString(),
     lastActive: raw.updatedAt || raw.lastActive || new Date().toISOString()
+    , isLocal: false
   };
 }
 
 export function ChatApp({ userProfile, onUpdateProfile, onLogout }: ChatAppProps) {
-  const [currentSessionId, setCurrentSessionId] = useState<string>('1');
-  const [chatSessions, setChatSessions] = useState<ChatSession[]>([
-    {
-      id: '1',
-      title: 'Welcome Chat',
-      messages: [
-        {
-          id: '1',
-          content:
-            "Hello! I'm QueryCraft, your intelligent database assistant. I can help you with SQL queries, data analysis, and database management. How can I assist you today?",
-          isUser: false,
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        }
-      ],
-      createdAt: new Date().toISOString(),
-      lastActive: new Date().toISOString()
-    }
-  ]);
+  const [currentSessionId, setCurrentSessionId] = useState<string>(''); // start empty
+  const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
 
   const [isTyping, setIsTyping] = useState(false);
   const [selectedModel, setSelectedModel] = useState<string>(userProfile.preferences.defaultModel);
@@ -145,6 +131,44 @@ export function ChatApp({ userProfile, onUpdateProfile, onLogout }: ChatAppProps
   // Polling helper
   function sleep(ms: number) {
     return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  function createLocalChat(title = 'New Chat') {
+    const id = Date.now().toString();
+    const newChat: ChatSession = {
+      id,
+      title,
+      messages: [],
+      createdAt: new Date().toISOString(),
+      lastActive: new Date().toISOString()
+      , isLocal: true
+    };
+    // prepend locally
+    setChatSessions((prev) => [newChat, ...prev]);
+    setCurrentSessionId(id);
+    return id;
+  }
+
+  // Merge a local chat (identified by localId) into a server chat returned by the backend.
+  // Preserves local messages and replaces the local placeholder with the server chat.
+  function mergeLocalToServer(localId: string, rawServerChat: RawChatFromServer) {
+    const serverNormalized = normalizeChat(rawServerChat);
+
+    setChatSessions((prev) => {
+      const local = prev.find((c) => c.id === localId);
+      // remove any existing item having serverNormalized.id (avoid duplicates), also remove local placeholder
+      const filtered = prev.filter((c) => c.id !== localId && c.id !== serverNormalized.id);
+
+      const merged = {
+        ...serverNormalized,
+        messages: local?.messages?.length ? local!.messages : serverNormalized.messages,
+        isLocal: false
+      };
+
+      return [merged, ...filtered];
+    });
+
+    setCurrentSessionId(serverNormalized.id);
   }
 
   /**
@@ -257,15 +281,16 @@ export function ChatApp({ userProfile, onUpdateProfile, onLogout }: ChatAppProps
         const res = await fetch(`${API_BASE}/api/chat`, { headers: authHeaders() });
         if (res.ok) {
           const data = (await res.json()) as unknown;
-          if (Array.isArray(data)) {
+          if (Array.isArray(data) && data.length > 0) {
             const chats = data.map((c) => normalizeChat(c as RawChatFromServer));
-            if (chats.length > 0) {
-              setChatSessions(chats);
-              setCurrentSessionId(chats[0].id);
-            }
+            setChatSessions(chats);
+            setCurrentSessionId(chats[0].id);
+          } else {
+            // no server chats: keep client empty => show NewChatScreen
+            setChatSessions([]);
+            setCurrentSessionId('');
           }
         } else if (res.status === 401) {
-          // unauthorized: keep default welcome chat and let UI handle auth flow
           console.warn('Unauthorized when loading chats (401).');
         } else {
           console.warn('Failed to fetch chats', res.status, res.statusText);
@@ -274,36 +299,13 @@ export function ChatApp({ userProfile, onUpdateProfile, onLogout }: ChatAppProps
         console.error('Load chats error', err);
       }
     })();
-    
   }, []);
 
-  // --- Create new chat on backend ---
-  const handleNewChat = async () => {
-    try {
-      const res = await fetch(`${API_BASE}/api/chat`, {
-        method: 'POST',
-        headers: authHeaders(),
-        body: JSON.stringify({ title: 'New Chat' })
-      });
 
-      if (res.ok) {
-        const chat = (await res.json()) as RawChatFromServer;
-        const normalized = normalizeChat(chat);
-        prependOrUpdateSession(normalized);
-        setCurrentSessionId(normalized.id);
-      } else {
-        // fallback: create local chat
-        const id = Date.now().toString();
-        prependOrUpdateSession({ id, title: 'New Chat', messages: [] });
-        setCurrentSessionId(id);
-        console.warn('Create chat failed, using local fallback', res.status, res.statusText);
-      }
-    } catch (err: unknown) {
-      const id = Date.now().toString();
-      prependOrUpdateSession({ id, title: 'New Chat', messages: [] });
-      setCurrentSessionId(id);
-      console.error('Error creating new chat (network)', err);
-    }
+  // When user clicks "New chat", only create a local chat. Server chat will be created
+  // only when the user sends the first message in that chat.
+  const handleNewChat = () => {
+    createLocalChat('New Chat');
   };
 
   const handleSelectSession = (sessionId: string) => {
@@ -329,10 +331,8 @@ export function ChatApp({ userProfile, onUpdateProfile, onLogout }: ChatAppProps
 
   // --- Send message: POST /api/query ---
   const handleSendMessage = async (content: string) => {
-    // ensure we have a chat id
-    if (!currentSessionId) {
-      await handleNewChat();
-    }
+    // ensure we have a chat id - create a local chat immediately for UX if none exists
+    let sessionId = currentSessionId || createLocalChat('New Chat');
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -341,10 +341,33 @@ export function ChatApp({ userProfile, onUpdateProfile, onLogout }: ChatAppProps
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
 
-    const sessionId = currentSessionId || Date.now().toString();
-    // append user msg
+    // append user msg locally first (use the sessionId defined above)
     updateSessionMessages(sessionId, (prev) => [...prev, userMessage]);
     setIsTyping(true);
+
+    // If this is a local-only chat (no server chat yet), create server chat now and migrate messages.
+    const sessionObj = chatSessions.find((s) => s.id === sessionId);
+    if (sessionObj?.isLocal) {
+      try {
+        const res = await fetch(`${API_BASE}/api/chat`, {
+          method: 'POST',
+          headers: authHeaders(),
+          body: JSON.stringify({ title: sessionObj.title || content.slice(0, 50) })
+        });
+
+        if (res.ok) {
+          const serverChat = (await res.json()) as RawChatFromServer;
+          // Merge local messages into server chat and switch to server id
+          mergeLocalToServer(sessionId, serverChat);
+          // ensure we use server id from normalizeChat
+          sessionId = (serverChat._id || serverChat.id) ?? sessionId;
+        } else {
+          console.warn('Failed to create server chat; continuing with local chat', res.status);
+        }
+      } catch (err) {
+        console.warn('Network error creating server chat, continuing with local chat', err);
+      }
+    }
 
     try {
       const payload = { chatId: sessionId, prompt: content, model: selectedModel };
