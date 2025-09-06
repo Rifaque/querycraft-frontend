@@ -4,6 +4,9 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 
+// Client auth provider (creates context + runs auto-login)
+import AuthProviderClient from "@/components/auth/AuthProviderClient";
+
 const poppins = Poppins({
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700"],
@@ -28,11 +31,12 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {children}
-          <Toaster />
+          <AuthProviderClient>
+            {children}
+            <Toaster />
+          </AuthProviderClient>
         </ThemeProvider>
       </body>
     </html>
   );
 }
-

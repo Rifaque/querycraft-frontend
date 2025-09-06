@@ -44,8 +44,25 @@ export function ChatHeader({ selectedModel, onModelChange, onDatabaseImport, onS
                 <SelectValue placeholder="Select a model" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="merlin">Merlin AI</SelectItem>
-                <SelectItem value="qwen">QWEN AI</SelectItem>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <SelectItem value="qwen:4b">Qwen AI</SelectItem>
+                    </TooltipTrigger>
+                    <TooltipContent side="right" align="center" className="max-w-xs text-sm">
+                      <strong>Qwen (4B)</strong> — faster, smaller model with a lower context window; great for quick, low-latency replies.
+                    </TooltipContent>
+                  </Tooltip>
+
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <SelectItem value="mistral:7b-instruct">Mistral AI</SelectItem>
+                    </TooltipTrigger>
+                    <TooltipContent side="right" align="center" className="max-w-xs text-sm">
+                      <strong>Mistral (7B)</strong> — larger and more capable with a bigger context window; slightly slower but better for complex prompts.
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </SelectContent>
             </Select>
           </div>
