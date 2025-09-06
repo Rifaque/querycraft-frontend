@@ -71,14 +71,21 @@ export function SettingsDialog({
 
   // Sync state when dialog opens or userProfile prop changes
   useEffect(() => {
-    if (open) {
-      setProfile(userProfile);
-    }
-  }, [open, userProfile]);
+    setProfile(userProfile);
+  }, [userProfile]);
 
   const handleProfileUpdate = () => {
     onUpdateProfile(profile);
+    try {
+      localStorage.setItem('qc_user', JSON.stringify(profile));
+    } catch (e) {
+      // ignore storage errors in strict environments
+      console.warn('Could not persist qc_user to localStorage', e);
+    }
+    // close dialog on save for a clearer flow
+    onOpenChange(false);
   };
+
 
   const handleFileImport = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];

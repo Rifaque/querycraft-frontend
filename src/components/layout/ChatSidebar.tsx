@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { MessageSquare, Trash2, Plus, X, User, LogOut, Settings, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -83,6 +83,11 @@ export function ChatSidebar({
     }
     return source.charAt(0).toUpperCase();
   };
+
+  useEffect(() => {
+    console.log('ChatSidebar userProfile changed', userProfile);
+  }, [userProfile]);
+
 
   return (
     <div className="flex flex-col h-full bg-card/95 backdrop-blur-xl border-r border-border">
