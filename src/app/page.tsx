@@ -6,7 +6,7 @@ import { AuthPage } from "@/components/pages/AuthPage";
 import { ChatApp } from "@/components/pages/ChatApp";
 import { toast } from "sonner";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "https://apiquerycraft.hubzero.in";
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE;
 
 interface UserProfile {
   name: string;
@@ -50,9 +50,11 @@ export default function Home() {
         const res = await fetch(`${API_BASE}/api/auth/me`, {
           headers: { Authorization: `Bearer ${token}` },
         });
+        console.log("response:", res);
 
         if (res.ok) {
           const data = await res.json();
+          console.log(data);
           setUserProfile(prev => ({
             ...prev,
             name: data.name ?? prev.name,

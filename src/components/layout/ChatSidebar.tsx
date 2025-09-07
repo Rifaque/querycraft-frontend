@@ -59,6 +59,7 @@ export function ChatSidebar({
   onLogout
 }: ChatSidebarProps) {
   const [hoveredSession, setHoveredSession] = useState<string | null>(null);
+  const user = localStorage.getItem("qc_user");
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -153,8 +154,8 @@ export function ChatSidebar({
               <AvatarFallback>{getInitials(userProfile)}</AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
-              <p className="font-medium text-sm truncate">{userProfile?.name ?? userProfile?.email ?? "Unknown user"}</p>
-              <p className="text-xs text-muted-foreground truncate">{userProfile?.email ?? ""}</p>
+              <p className="font-medium text-sm truncate">{user ? JSON.parse(user).name :userProfile?.name}</p>
+              <p className="text-xs text-muted-foreground truncate">{user ? JSON.parse(user).email :userProfile?.email}</p>
             </div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
