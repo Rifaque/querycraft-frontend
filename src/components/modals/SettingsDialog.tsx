@@ -68,17 +68,25 @@ export function SettingsDialog({
   onClearAllHistory
 }: SettingsDialogProps) {
   const [profile, setProfile] = useState<UserProfile>(userProfile);
+  const user = localStorage.getItem("qc_user");
 
   // Sync state when dialog opens or userProfile prop changes
   useEffect(() => {
-    if (open) {
-      setProfile(userProfile);
-    }
-  }, [open, userProfile]);
+    setProfile(userProfile);
+  }, [userProfile]);
 
   const handleProfileUpdate = () => {
     onUpdateProfile(profile);
+    try {
+      localStorage.setItem('qc_user', JSON.stringify(profile));
+    } catch (e) {
+      // ignore storage errors in strict environments
+      console.warn('Could not persist qc_user to localStorage', e);
+    }
+    // close dialog on save for a clearer flow
+    onOpenChange(false);
   };
+
 
   const handleFileImport = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -137,11 +145,11 @@ export function SettingsDialog({
                   <CardContent className="space-y-4">
                       <div className="space-y-2">
                         <Label htmlFor="name">Display Name</Label>
-                        <Input id="name" value={profile.name} onChange={(e) => setProfile(p => ({ ...p, name: e.target.value }))} />
+                        <Input id="name" value={user ? JSON.parse(user).name : profile.name} onChange={(e) => setProfile(p => ({ ...p, name: e.target.value }))} />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="email">Email Address</Label>
-                        <Input id="email" type="email" value={profile.email} onChange={(e) => setProfile(p => ({ ...p, email: e.target.value }))} />
+                        <Input id="email" type="email" value={user ? JSON.parse(user).email : profile.email} onChange={(e) => setProfile(p => ({ ...p, email: e.target.value }))} />
                       </div>
                   </CardContent>
                 </Card>

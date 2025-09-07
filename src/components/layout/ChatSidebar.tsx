@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { MessageSquare, Trash2, Plus, X, User, LogOut, Settings, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -59,6 +59,7 @@ export function ChatSidebar({
   onLogout
 }: ChatSidebarProps) {
   const [hoveredSession, setHoveredSession] = useState<string | null>(null);
+  const user = localStorage.getItem("qc_user");
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -83,6 +84,11 @@ export function ChatSidebar({
     }
     return source.charAt(0).toUpperCase();
   };
+
+  useEffect(() => {
+    console.log('ChatSidebar userProfile changed', userProfile);
+  }, [userProfile]);
+
 
   return (
     <div className="flex flex-col h-full bg-card/95 backdrop-blur-xl border-r border-border">
@@ -148,8 +154,8 @@ export function ChatSidebar({
               <AvatarFallback>{getInitials(userProfile)}</AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
-              <p className="font-medium text-sm truncate">{userProfile?.name ?? userProfile?.email ?? "Unknown user"}</p>
-              <p className="text-xs text-muted-foreground truncate">{userProfile?.email ?? ""}</p>
+              <p className="font-medium text-sm truncate">{user ? JSON.parse(user).name :userProfile?.name}</p>
+              <p className="text-xs text-muted-foreground truncate">{user ? JSON.parse(user).email :userProfile?.email}</p>
             </div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

@@ -128,6 +128,14 @@ export function ChatApp({ userProfile, onUpdateProfile, onLogout }: ChatAppProps
     return () => { isMountedRef.current = false; };
   }, []);
 
+  // Keep selectedModel in sync if the user's default model preference changes
+  useEffect(() => {
+    if (userProfile?.preferences?.defaultModel) {
+      setSelectedModel(userProfile.preferences.defaultModel);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userProfile?.preferences?.defaultModel]);
+
   // Polling helper
   function sleep(ms: number) {
     return new Promise((resolve) => setTimeout(resolve, ms));
@@ -518,6 +526,7 @@ export function ChatApp({ userProfile, onUpdateProfile, onLogout }: ChatAppProps
     <div className="h-screen flex bg-background">
       <div className="hidden lg:block w-80 flex-shrink-0">
         <ChatSidebar
+          key={userProfile.email}
           chatSessions={chatSessions}
           currentSessionId={currentSessionId}
           onSelectSession={handleSelectSession}
@@ -555,6 +564,7 @@ export function ChatApp({ userProfile, onUpdateProfile, onLogout }: ChatAppProps
       <DatabaseImportDialog open={showDatabaseDialog} onOpenChange={setShowDatabaseDialog} onImport={() => handleDatabaseImport()} />
 
       <SettingsDialog
+        key={userProfile.email}
         open={showSettingsDialog}
         onOpenChange={setShowSettingsDialog}
         chatSessions={chatSessions}

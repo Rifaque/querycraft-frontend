@@ -60,3 +60,57 @@
     color: hsl(var(--foreground));
   }
 }
+
+/* monospace stack matching ChatGPT style */
+pre, code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", "Segoe UI Mono", "Noto Mono", monospace;
+  font-size: 0.95rem; /* tweak as needed */
+  line-height: 1.55;
+  tab-size: 2;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Example small tweak to ensure Prism tokens inherit good contrast */
+code[class*="language-"],
+pre[class*="language-"] {
+  color: #c9d1d9; /* base text for code */
+}
+
+/* Optionally override Prism token colors (example) */
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: #6a737d;
+}
+
+.token.keyword,
+.token.boolean,
+.token.constant,
+.token.deleted,
+.token.selector,
+.token.tag {
+  color: #ff7b72;
+}
+
+.token.function,
+.token.class-name {
+  color: #d2a8ff;
+}
+
+.token.string,
+.token.attr-value,
+.token.regex,
+.token.variable {
+  color: #a5d6a7;
+}
+
+/* adjust scrollbar in code blocks (optional) */
+pre::-webkit-scrollbar {
+  height: 8px;
+}
+pre::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.06);
+  border-radius: 8px;
+}
+
