@@ -1,15 +1,16 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { ChatHeader } from '@/components/chat/ChatHeader';
-import { ChatWindow } from '@/components/chat/ChatWindow';
-import { ChatInput } from '@/components/chat/ChatInput';
-import { DatabaseImportDialog } from '@/components/modals/DatabaseImportDialog';
-import { ChatSidebar } from '@/components/layout/ChatSidebar';
-import { MobileSidebarTrigger } from '@/components/layout/MobileSidebarTrigger';
-import { SettingsDialog } from '@/components/modals/SettingsDialog';
+import { useState } from "react";
+import { ChatHeader } from "@/components/chat/ChatHeader";
+import { ChatWindow } from "@/components/chat/ChatWindow";
+import { ChatInput } from "@/components/chat/ChatInput";
+import { DatabaseImportDialog } from "@/components/modals/DatabaseImportDialog";
+import { ChatSidebar } from "@/components/layout/ChatSidebar";
+import { MobileSidebarTrigger } from "@/components/layout/MobileSidebarTrigger";
+import { SettingsDialog } from "@/components/modals/SettingsDialog";
+//import { toast } from "@/components/ui/sonner";
 
-// --- Types ---
+// Define the structure for messages, sessions, and user profiles
 interface Message {
   id: string;
   content: string;
@@ -23,7 +24,6 @@ interface ChatSession {
   messages: Message[];
   createdAt: string;
   lastActive: string;
-  isLocal?: boolean;
 }
 
 interface UserProfile {
@@ -44,82 +44,27 @@ interface ChatAppProps {
   onLogout: () => void;
 }
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'https://apiquerycraft.hubzero.in';
-
-function authHeaders(): HeadersInit {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-
-  if (typeof window !== 'undefined') {
-    const token = localStorage.getItem('qc_token');
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-  }
-
-  return headers;
-}
-
-// --- Response shapes from backend (narrowly typed) ---
-interface RawChatFromServer {
-  _id?: string;
-  id?: string;
-  title?: string;
-  messages?: unknown;
-  createdAt?: string;
-  updatedAt?: string;
-  lastActive?: string;
-}
-
-// --- Backend minimal response shape ---
-interface QueryResponse {
-  queryId?: string;
-  chatId?: string;
-  model?: string;
-  status?: 'pending' | 'done' | 'failed';
-  createdAt?: string;
-  updatedAt?: string;
-  response?: string; // the actual generated string
-}
-
-
-// --- Helpers: safe parsing utilities ---
-function isMessageArray(v: unknown): v is Message[] {
-  return Array.isArray(v) && v.every((m) => {
-    const mm = m as unknown as Record<string, unknown>;
-    return typeof mm.id === 'string' && typeof mm.content === 'string';
-  });
-}
-
-function normalizeChat(raw: RawChatFromServer): ChatSession {
-  const id = raw._id || raw.id || String(Date.now()) ;
-  const title = raw.title || 'Chat';
-  const messages: Message[] = isMessageArray(raw.messages)
-    ? raw.messages
-    : [
-        {
-          id: Date.now().toString(),
-          content: 'This chat has no structured messages (server returned unexpected shape).',
-          isUser: false,
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        }
-      ];
-
-  return {
-    id,
-    title,
-    messages,
-    createdAt: raw.createdAt || new Date().toISOString(),
-    lastActive: raw.updatedAt || raw.lastActive || new Date().toISOString()
-    , isLocal: false
-  };
-}
-
 export function ChatApp({ userProfile, onUpdateProfile, onLogout }: ChatAppProps) {
-  const [currentSessionId, setCurrentSessionId] = useState<string>(''); // start empty
-  const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
+  const [currentSessionId, setCurrentSessionId] = useState<string>("1");
+  const [chatSessions, setChatSessions] = useState<ChatSession[]>([
+    {
+      id: "1",
+      title: "Welcome Chat",
+      messages: [
+        {
+          id: "1",
+          content: "Hello! I'm QueryCraft, your intelligent database assistant. I can help you with SQL queries, data analysis, and database management. How can I assist you today?",
+          isUser: false,
+          timestamp: "10:30 AM",
+        },
+      ],
+      createdAt: new Date().toISOString(),
+      lastActive: new Date().toISOString(),
+    },
+  ]);
 
   const [isTyping, setIsTyping] = useState(false);
-  const [selectedModel, setSelectedModel] = useState<string>(userProfile.preferences.defaultModel);
+  const [selectedModel, setSelectedModel] = useState(userProfile.preferences.defaultModel);
   const [showDatabaseDialog, setShowDatabaseDialog] = useState(false);
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
 
@@ -262,265 +207,46 @@ export function ChatApp({ userProfile, onUpdateProfile, onLogout }: ChatAppProps
   const currentSession = chatSessions.find((s) => s.id === currentSessionId) || chatSessions[0] || null;
   const messages = currentSession?.messages || [];
 
-
-  const prependOrUpdateSession = (chat: Partial<ChatSession> & { id: string }) => {
-    setChatSessions((prev) => {
-      const exists = prev.find((p) => p.id === chat.id);
-      if (exists) {
-        return prev.map((p) => (p.id === chat.id ? { ...p, ...chat } : p));
-      }
-      return [
-        {
-          id: chat.id,
-          title: chat.title || 'New Chat',
-          messages: chat.messages || [],
-          createdAt: chat.createdAt || new Date().toISOString(),
-          lastActive: chat.lastActive || new Date().toISOString()
-        },
-        ...prev
-      ];
-    });
+  const updateSessionMessages = (sessionId: string, newMessages: Message[]) => {
+    setChatSessions(prev => prev.map(session => 
+      session.id === sessionId 
+        ? { ...session, messages: newMessages, lastActive: new Date().toISOString() }
+        : session
+    ));
   };
 
-  // --- Load user's chats on mount ---
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await fetch(`${API_BASE}/api/chat`, { headers: authHeaders() });
-        if (res.ok) {
-          const data = (await res.json()) as unknown;
-          if (Array.isArray(data) && data.length > 0) {
-            const chats = data.map((c) => normalizeChat(c as RawChatFromServer));
-            setChatSessions(chats);
-            setCurrentSessionId(chats[0].id);
-          } else {
-            // no server chats: keep client empty => show NewChatScreen
-            setChatSessions([]);
-            setCurrentSessionId('');
-          }
-        } else if (res.status === 401) {
-          console.warn('Unauthorized when loading chats (401).');
-        } else {
-          console.warn('Failed to fetch chats', res.status, res.statusText);
-        }
-      } catch (err: unknown) {
-        console.error('Load chats error', err);
-      }
-    })();
-  }, []);
-
-
-  // When user clicks "New chat", only create a local chat. Server chat will be created
-  // only when the user sends the first message in that chat.
-  const handleNewChat = () => {
-    createLocalChat('New Chat');
-  };
-
-  const handleSelectSession = (sessionId: string) => {
-    setCurrentSessionId(sessionId);
-  };
-
-  const handleDeleteSession = async (sessionId: string) => {
-    try {
-      const res = await fetch(`${API_BASE}/api/chat/${sessionId}`, { method: 'DELETE', headers: authHeaders() });
-      if (res.ok) {
-        setChatSessions((prev) => prev.filter((s) => s.id !== sessionId));
-        if (currentSessionId === sessionId && chatSessions.length > 1) setCurrentSessionId(chatSessions[0].id);
-      } else {
-        // if backend doesn't support, remove locally
-        setChatSessions((prev) => prev.filter((s) => s.id !== sessionId));
-        console.warn('Delete session backend returned', res.status);
-      }
-    } catch (err: unknown) {
-      setChatSessions((prev) => prev.filter((s) => s.id !== sessionId));
-      console.error('Delete session error', err);
-    }
-  };
-
-  // --- Send message: POST /api/query ---
   const handleSendMessage = async (content: string) => {
-    // ensure we have a chat id - create a local chat immediately for UX if none exists
-    let sessionId = currentSessionId || createLocalChat('New Chat');
-
     const userMessage: Message = {
       id: Date.now().toString(),
       content,
       isUser: true,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     };
 
-    // append user msg locally first (use the sessionId defined above)
-    updateSessionMessages(sessionId, (prev) => [...prev, userMessage]);
+    const newMessages = [...messages, userMessage];
+    updateSessionMessages(currentSessionId, newMessages);
     setIsTyping(true);
 
-    // If this is a local-only chat (no server chat yet), create server chat now and migrate messages.
-    const sessionObj = chatSessions.find((s) => s.id === sessionId);
-    if (sessionObj?.isLocal) {
-      try {
-        const res = await fetch(`${API_BASE}/api/chat`, {
-          method: 'POST',
-          headers: authHeaders(),
-          body: JSON.stringify({ title: sessionObj.title || content.slice(0, 50) })
-        });
-
-        if (res.ok) {
-          const serverChat = (await res.json()) as RawChatFromServer;
-          // Merge local messages into server chat and switch to server id
-          mergeLocalToServer(sessionId, serverChat);
-          // ensure we use server id from normalizeChat
-          sessionId = (serverChat._id || serverChat.id) ?? sessionId;
-        } else {
-          console.warn('Failed to create server chat; continuing with local chat', res.status);
-        }
-      } catch (err) {
-        console.warn('Network error creating server chat, continuing with local chat', err);
-      }
-    }
-
-    try {
-      const payload = { chatId: sessionId, prompt: content, model: selectedModel };
-      const res = await fetch(`${API_BASE}/api/query`, {
-        method: 'POST',
-        headers: authHeaders(),
-        body: JSON.stringify(payload)
-      });
-
-      // extract body if present (safe)
-      let data: QueryResponse | null = null;
-      try {
-        data = res.ok || res.status === 202 ? (await res.json()) as QueryResponse : (await res.json()) as QueryResponse;
-      } catch {
-        data = null;
-      }
-
-      // When server returns pending (202) or minimal with status pending:
-      if (res.status === 202 || data?.status === 'pending') {
-        // Create placeholder AI message and start polling
-        const placeholderId = `ai-${data?.queryId || Date.now().toString()}`;
-        const placeholderMsg: Message = {
-          id: placeholderId,
-          content: 'Thinking...',
-          isUser: false,
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        };
-        updateSessionMessages(sessionId, (prev) => [...prev, placeholderMsg]);
-
-        // if backend returned a new chatId (server created chat), ensure we update local sessions
-        if (data?.chatId) {
-          prependOrUpdateSession({ id: data.chatId, title: content.slice(0, 50), messages: [...(messages || []), userMessage, placeholderMsg] });
-          // switch to new chat id
-          // Note: server might have created a different chat id than client session; update sessionId for polling
-          setCurrentSessionId(data.chatId);
-        }
-
-        // Poll in background (no await here)
-        pollQueryResult(data?.queryId || '', placeholderId, data?.chatId || sessionId);
-        return;
-      }
-
-      // If sync response (done)
-      if (res.ok && data) {
-        const aiText = data.response || 'No response from LLM';
-        const aiMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          content: aiText,
-          isUser: false,
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        };
-
-        updateSessionMessages(sessionId, (prev) => [...prev, aiMessage]);
-
-        // If backend returned a chatId (created new chat), ensure local session uses it
-        if (data.chatId) {
-          prependOrUpdateSession({ id: data.chatId, title: content.slice(0, 50), messages: [...(messages || []), userMessage, aiMessage] });
-          setCurrentSessionId(data.chatId);
-        }
-
-        return;
-      }
-
-      // Non-ok response handling (use your existing flow)
-      let errBody: unknown = null;
-      try {
-        errBody = await res.json();
-      } catch {
-        errBody = { message: res.statusText };
-      }
-      const errMsgFromBody =
-        typeof errBody === 'object' && errBody !== null
-          ? String((errBody as Record<string, unknown>).error ?? (errBody as Record<string, unknown>).message ?? '')
-          : '';
-      const serverMessage =
-        res.status === 404
-          ? 'Endpoint not found (404). Check NEXT_PUBLIC_API_BASE and that your backend exposes POST /api/query.'
-          : (errMsgFromBody || res.statusText);
-
+    setTimeout(() => {
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
-        content: serverMessage,
+        content: `This is a mock response from ${selectedModel === "merlin" ? "Merlin AI" : "QWEN AI"}.`,
         isUser: false,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       };
-      updateSessionMessages(sessionId, (prev) => [...prev, aiMessage]);
-      console.warn('Query failed', res.status, res.statusText, errBody);
-    } catch (err: unknown) {
-      const aiMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        content: `Network or LLM error: ${err instanceof Error ? err.message : String(err)}`,
-        isUser: false,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      };
-      updateSessionMessages(currentSessionId || Date.now().toString(), (prev) => [...prev, aiMessage]);
-      console.error('Network or LLM error', err);
-    } finally {
+      updateSessionMessages(currentSessionId, [...newMessages, aiMessage]);
       setIsTyping(false);
-    }
+    }, 1500);
   };
-
-
-  // --- Export / Import / Clear (client-friendly implementations) ---
-  const handleExportSessions = () => {
-    const blob = new Blob([JSON.stringify(chatSessions, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'querycraft-chats.json';
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  const handleImportSessions = (file: File) => {
-    const reader = new FileReader();
-    reader.onload = (e: ProgressEvent<FileReader>) => {
-      try {
-        const text = String(e.target?.result || '[]');
-        const json = JSON.parse(text) as unknown;
-        const imported = Array.isArray(json)
-          ? (json as unknown[]).map((c) => normalizeChat(c as RawChatFromServer))
-          : [];
-        setChatSessions((prev) => [...imported, ...prev]);
-      } catch (err: unknown) {
-        console.error('Invalid import file', err);
-      }
-    };
-    reader.readAsText(file);
-  };
-
-  const handleClearAllHistory = async () => {
-    try {
-      // Attempt backend clear first (if backend supports DELETE /api/chat)
-      await fetch(`${API_BASE}/api/chat`, { method: 'DELETE', headers: authHeaders() }).catch(() => null);
-    } catch (e: unknown) {
-      console.error('Clear history network error', e);
-    }
-    // Always clear client state
-    setChatSessions([]);
-    setCurrentSessionId('');
-  };
-
-  const handleDatabaseImport = () => {
-    setShowDatabaseDialog(true);
-  };
+  
+  // Placeholder functions from original file
+  const handleSelectSession = (sessionId: string) => setCurrentSessionId(sessionId);
+  const handleDeleteSession = (sessionId: string) => { console.log("Delete session:", sessionId); };
+  const handleNewChat = () => { console.log("New Chat"); };
+  const handleDatabaseImport = () => { console.log("Import DB"); };
+  const handleExportSessions = () => { console.log("Exporting"); };
+  const handleImportSessions = (file: File) => { console.log("Importing file:", file.name); };
+  const handleClearAllHistory = () => { console.log("Clearing history"); };
 
   return (
     <div className="h-screen flex bg-background">
@@ -537,9 +263,9 @@ export function ChatApp({ userProfile, onUpdateProfile, onLogout }: ChatAppProps
           onLogout={onLogout}
         />
       </div>
-
+      
       <div className="flex-1 flex flex-col min-w-0">
-        <ChatHeader
+        <ChatHeader 
           selectedModel={selectedModel}
           onModelChange={setSelectedModel}
           onDatabaseImport={() => setShowDatabaseDialog(true)}
@@ -560,8 +286,12 @@ export function ChatApp({ userProfile, onUpdateProfile, onLogout }: ChatAppProps
         <ChatWindow messages={messages} isTyping={isTyping} />
         <ChatInput onSendMessage={handleSendMessage} disabled={isTyping} />
       </div>
-
-      <DatabaseImportDialog open={showDatabaseDialog} onOpenChange={setShowDatabaseDialog} onImport={() => handleDatabaseImport()} />
+      
+      <DatabaseImportDialog
+        open={showDatabaseDialog}
+        onOpenChange={setShowDatabaseDialog}
+        onImport={handleDatabaseImport}
+      />
 
       <SettingsDialog
         key={userProfile.email}
