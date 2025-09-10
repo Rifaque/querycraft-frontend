@@ -34,7 +34,7 @@ export function IntroPage({ onShowAuth }: IntroPageProps) {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: 'var(--background)' }}>
+    <div className="min-h-screen flex flex-col " style={{ background: 'var(--background)' }}>
       {/* Navigation Header */}
       <nav className="w-full px-6 py-4 flex items-center justify-between backdrop-blur-sm bg-card/80 border-b border-border">
         <div className="flex items-center space-x-3">
@@ -130,7 +130,7 @@ export function IntroPage({ onShowAuth }: IntroPageProps) {
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.4 + index * 0.1 }}
-                className="p-8 bg-card rounded-2xl border transition-all duration-300 hover:border-primary/50 hover:shadow-xl"
+                className="p-8 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl border border-sky-100 dark:border-gray-700 hover:border-sky-200 dark:hover:border-sky-600 transition-all duration-300 hover:shadow-xl hover:scale-105"
               >
                 <div className="w-16 h-16 bg-gradient-to-r from-sky-500 to-blue-600 rounded-2xl flex items-center justify-center mb-6 mx-auto text-white">
                   {feature.icon}

@@ -217,7 +217,12 @@ export function AuthPage({ onBack, onLogin, onSignUp }: AuthPageProps) {
               isSignUp ? "opacity-0 pointer-events-none" : "opacity-100"
             }`}
           >
-            <h2 className="text-4xl font-bold text-foreground mb-10 text-center">
+            <motion.div
+              initial={{ opacity: 0, x: -50 }}
+              animate={{ opacity: isSignUp ? 0 : 1, x: isSignUp ? -50 : 0 }}
+              transition={{ delay: isSignUp ? 0.2 : 0.3 }}
+            >
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-800 dark:text-gray-200 mb-6 md:mb-10 font-mono">
               Sign In
             </h2>
             {error && (
@@ -231,29 +236,33 @@ export function AuthPage({ onBack, onLogin, onSignUp }: AuthPageProps) {
                 placeholder="Email"
                 value={loginEmail}
                 onChange={(e) => setLoginEmail(e.target.value)}
+                className="w-full p-4 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all duration-200 hover:border-purple-300"
                 required
               />
+              <div className="space-y-2">
               <Input
                 type="password"
                 placeholder="Password"
                 value={loginPassword}
                 onChange={(e) => setLoginPassword(e.target.value)}
+                className="w-full p-4 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all duration-200 hover:border-purple-300"
                 required
               />
-              <a
-                href="#"
-                className="block text-center text-sm text-primary hover:underline"
-              >
-                Forgot Your Password?
-              </a>
+              </div>
+               <div className="text-center">
+                  <a href="#" className="text-purple-600 hover:text-purple-800 dark:text-purple-400 dark:hover:text-purple-300 text-sm font-medium">
+                    Forgot Your Password?
+                  </a>
+                </div>
               <Button
                 type="submit"
-                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground rounded-full text-lg py-6"
+                className="w-full bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white py-4 rounded-full font-semibold text-lg transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
                 disabled={loading}
               >
                 {loading ? "Signing in..." : "SIGN IN"}
               </Button>
             </form>
+            </motion.div>
           </div>
 
           {/* Sign Up (Unchanged from Code 1) */}
@@ -262,7 +271,12 @@ export function AuthPage({ onBack, onLogin, onSignUp }: AuthPageProps) {
               !isSignUp ? "opacity-0 pointer-events-none" : "opacity-100"
             }`}
           >
-            <h2 className="text-4xl font-bold text-foreground mb-10 text-center">
+            <motion.div
+              initial={{ opacity: 0, x: 50 }}
+              animate={{ opacity: isSignUp ? 1 : 0, x: isSignUp ? 0 : 50 }}
+              transition={{ delay: isSignUp ? 0.3 : 0 }}
+            >
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-800 dark:text-gray-200 mb-6 md:mb-10 font-mono">
               Create Account
             </h2>
             {error && (
@@ -271,35 +285,47 @@ export function AuthPage({ onBack, onLogin, onSignUp }: AuthPageProps) {
               </div>
             )}
             <form onSubmit={handleSignUp} className="space-y-4">
-              <Input
-                type="text"
-                placeholder="Name"
-                value={signUpName}
-                onChange={(e) => setSignUpName(e.target.value)}
-                required
-              />
-              <Input
-                type="email"
-                placeholder="Email"
-                value={signUpEmail}
-                onChange={(e) => setSignUpEmail(e.target.value)}
-                required
-              />
-              <Input
-                type="password"
-                placeholder="Password"
-                value={signUpPassword}
-                onChange={(e) => setSignUpPassword(e.target.value)}
-                required
-              />
+              <div className="space-y-2">
+                  <Input
+                    type="text"
+                    placeholder="Name"
+                    value={signUpName}
+                    onChange={(e) => setSignUpName(e.target.value)}
+                    className="w-full p-4 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all duration-200 hover:border-purple-300"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Input
+                    type="email"
+                    placeholder="Email"
+                    value={signUpEmail}
+                    onChange={(e) => setSignUpEmail(e.target.value)}
+                    className="w-full p-4 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all duration-200 hover:border-purple-300"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Input
+                    type="password"
+                    placeholder="Password"
+                    value={signUpPassword}
+                    onChange={(e) => setSignUpPassword(e.target.value)}
+                    className="w-full p-4 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all duration-200 hover:border-purple-300"
+                    required
+                  />
+                </div>
               <Button
                 type="submit"
-                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground rounded-full text-lg py-6"
+                className="w-full bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white py-4 rounded-full font-semibold text-lg transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
                 disabled={loading}
               >
                 {loading ? "Creating account..." : "SIGN UP"}
               </Button>
             </form>
+            </motion.div>
           </div>
         </div>
       </main>
