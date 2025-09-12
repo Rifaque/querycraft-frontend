@@ -34,7 +34,7 @@ export function ChatWindow({ messages, isTyping = false, showWelcome = false }: 
       }
     } catch (e) {
       // defensive: don't break the UI if scroll fails for any reason
-      // console.warn('[ChatWindow] scroll error', e);
+      console.warn('[ChatWindow] scroll error', e);
     }
   }, [messages, isTyping]);
 

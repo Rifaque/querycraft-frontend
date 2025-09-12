@@ -1,13 +1,12 @@
 'use client';
 
 import React, { useState, useEffect } from "react"; // 1. Added 'React' import
-import { Settings, User, MessageSquare, Download, Upload, Save, AlertTriangle } from "lucide-react";
+import { Settings, User, MessageSquare, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 // import { Separator } from "@/components/ui/separator";
 // import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";

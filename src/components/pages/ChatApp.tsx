@@ -40,7 +40,6 @@ interface UserProfile {
 
 interface ChatAppProps {
   userProfile: UserProfile;
-  onUpdateProfile: (profile: UserProfile) => void;
   onLogout: () => void;
 }
 
@@ -81,17 +80,43 @@ interface QueryResponse {
   response?: string; // the actual generated string
 }
 
+// --- Small safe helpers / type guards ---
+function isNonEmptyString(v: unknown): v is string {
+  return typeof v === 'string' && v.trim().length > 0;
+}
 
-// --- Helpers: safe parsing utilities ---
+function getStringField(obj: unknown, ...keys: string[]): string | undefined {
+  if (typeof obj !== 'object' || obj === null) return undefined;
+  for (const k of keys) {
+    const v = (obj as Record<string, unknown>)[k];
+    if (isNonEmptyString(v)) return v;
+  }
+  return undefined;
+}
+
+function getBooleanField(obj: unknown, key: string): boolean | undefined {
+  if (typeof obj !== 'object' || obj === null) return undefined;
+  const v = (obj as Record<string, unknown>)[key];
+  if (typeof v === 'boolean') return v;
+  return undefined;
+}
+
+function getTimestampFrom(obj: unknown, ...keys: string[]): string {
+  const s = getStringField(obj, ...keys);
+  if (s) return new Date(s).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
 function isMessageArray(v: unknown): v is Message[] {
   return Array.isArray(v) && v.every((m) => {
-    const mm = m as unknown as Record<string, unknown>;
-    return typeof mm.id === 'string' && typeof mm.content === 'string';
+    if (typeof m !== 'object' || m === null) return false;
+    const mm = m as Record<string, unknown>;
+    return typeof mm.id === 'string' && typeof mm.content === 'string' && typeof mm.isUser === 'boolean';
   });
 }
 
 function normalizeChat(raw: RawChatFromServer): ChatSession {
-  const id = raw._id || raw.id || String(Date.now()) ;
+  const id = raw._id || raw.id || String(Date.now());
   const title = raw.title || 'Chat';
   const messages: Message[] = isMessageArray(raw.messages)
     ? raw.messages
@@ -109,12 +134,12 @@ function normalizeChat(raw: RawChatFromServer): ChatSession {
     title,
     messages,
     createdAt: raw.createdAt || new Date().toISOString(),
-    lastActive: raw.updatedAt || raw.lastActive || new Date().toISOString()
-    , isLocal: false
+    lastActive: raw.updatedAt || raw.lastActive || new Date().toISOString(),
+    isLocal: false
   };
 }
 
-export function ChatApp({ userProfile, onUpdateProfile, onLogout }: ChatAppProps) {
+export function ChatApp({ userProfile, onLogout }: ChatAppProps) {
   const [currentSessionId, setCurrentSessionId] = useState<string>(''); // start empty
   const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
 
@@ -148,35 +173,13 @@ export function ChatApp({ userProfile, onUpdateProfile, onLogout }: ChatAppProps
       title,
       messages: [],
       createdAt: new Date().toISOString(),
-      lastActive: new Date().toISOString()
-      , isLocal: true
+      lastActive: new Date().toISOString(),
+      isLocal: true
     };
     // prepend locally
     setChatSessions((prev) => [newChat, ...prev]);
     setCurrentSessionId(id);
     return id;
-  }
-
-  // Merge a local chat (identified by localId) into a server chat returned by the backend.
-  // Preserves local messages and replaces the local placeholder with the server chat.
-  function mergeLocalToServer(localId: string, rawServerChat: RawChatFromServer) {
-    const serverNormalized = normalizeChat(rawServerChat);
-
-    setChatSessions((prev) => {
-      const local = prev.find((c) => c.id === localId);
-      // remove any existing item having serverNormalized.id (avoid duplicates), also remove local placeholder
-      const filtered = prev.filter((c) => c.id !== localId && c.id !== serverNormalized.id);
-
-      const merged = {
-        ...serverNormalized,
-        messages: local?.messages?.length ? local!.messages : serverNormalized.messages,
-        isLocal: false
-      };
-
-      return [merged, ...filtered];
-    });
-
-    setCurrentSessionId(serverNormalized.id);
   }
 
   /**
@@ -195,7 +198,7 @@ export function ChatApp({ userProfile, onUpdateProfile, onLogout }: ChatAppProps
           // If 404/403 etc, stop polling and show error in placeholder
           if (res.status === 404 || res.status === 403) {
             const errText = `Server returned ${res.status}`;
-            updateSessionMessages(sessionId, messages => 
+            updateSessionMessages(sessionId, messages =>
               messages.map(m => (m.id === placeholderMessageId ? { ...m, content: errText } : m))
             );
             return;
@@ -258,10 +261,8 @@ export function ChatApp({ userProfile, onUpdateProfile, onLogout }: ChatAppProps
     return s?.messages?.[0]?.content?.slice?.(0, 50) || '';
   }
 
-
   const currentSession = currentSessionId ? chatSessions.find((s) => s.id === currentSessionId) ?? null : null;
   const messages = currentSession?.messages || [];
-
 
   const prependOrUpdateSession = (chat: Partial<ChatSession> & { id: string }) => {
     setChatSessions((prev) => {
@@ -330,9 +331,6 @@ export function ChatApp({ userProfile, onUpdateProfile, onLogout }: ChatAppProps
   const handleSelectSession = async (sessionId: string) => {
     if (!sessionId) return;
 
-    // Optional: track loading id so you can show a spinner in the sidebar / chat header if you want
-    // setFetchingChatId(sessionId);
-
     try {
       const res = await fetch(`${API_BASE}/api/chat/${sessionId}`, {
         headers: authHeaders(),
@@ -349,85 +347,74 @@ export function ChatApp({ userProfile, onUpdateProfile, onLogout }: ChatAppProps
         return;
       }
 
-      const body = await res.json();
+      const body = (await res.json()) as unknown;
 
       // The backend endpoint you showed returns { chat, queries }
       // But be defensive: handle a few possible shapes gracefully.
-      const serverChat = (body && (body.chat || body)) as RawChatFromServer;
-      const queries = Array.isArray(body?.queries) ? body.queries : (Array.isArray(body) ? body : []);
+      const serverChat = (body && ((body as Record<string, unknown>).chat || body)) as RawChatFromServer;
+      const queries = Array.isArray((body as Record<string, unknown>)?.queries)
+        ? ((body as Record<string, unknown>).queries as unknown[])
+        : (Array.isArray(body) ? (body as unknown[]) : []);
 
       // Build messages in the shape your UI expects.
-      // We'll attempt to map common query fields: prompt, response, createdAt, role, text, output, etc.
       const mappedMessages: Message[] = [];
 
       if (Array.isArray(queries) && queries.length > 0) {
-        queries.forEach((q: any, idx: number) => {
-          const qId = q._id ?? q.id ?? `q-${sessionId}-${idx}`;
+        queries.forEach((q: unknown, idx: number) => {
+          const qId = getStringField(q, '_id', 'id') ?? `q-${sessionId}-${idx}`;
 
           // If the query doc stores a user prompt separately, add it as a user message.
-          if (typeof q.prompt === 'string' && q.prompt.trim().length > 0) {
+          const userPrompt = getStringField(q, 'prompt', 'input');
+          if (userPrompt) {
             mappedMessages.push({
               id: `${qId}-u`,
-              content: q.prompt,
+              content: userPrompt,
               isUser: true,
-              timestamp: new Date(q.createdAt ?? q.created_at ?? q.createdAt ?? Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-            });
-          } else if (typeof q.input === 'string' && q.input.trim().length > 0) {
-            mappedMessages.push({
-              id: `${qId}-u`,
-              content: q.input,
-              isUser: true,
-              timestamp: new Date(q.createdAt ?? q.created_at ?? Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+              timestamp: getTimestampFrom(q, 'createdAt', 'created_at')
             });
           }
 
-          // Attempt to pick the response text from common fields
-          const possibleResponses = [q.response, q.answer, q.output, q.result, q.text, q.content];
-          const responseText = possibleResponses.find((v) => typeof v === 'string' && v.trim().length > 0) as string | undefined;
+          // Pull out response text from common fields
+          const responseText = getStringField(q, 'response', 'answer', 'output', 'result', 'text', 'content', 'message');
 
           if (responseText) {
             mappedMessages.push({
               id: `${qId}-a`,
               content: responseText,
               isUser: false,
-              timestamp: new Date(q.updatedAt ?? q.createdAt ?? q.created_at ?? Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+              timestamp: getTimestampFrom(q, 'updatedAt', 'createdAt', 'created_at')
             });
-          } else {
-            // Some schemas store full exchange in a single field (e.g. 'message' or 'content')
-            if (typeof q.message === 'string' && q.message.trim()) {
-              mappedMessages.push({
-                id: `${qId}-a2`,
-                content: q.message,
-                isUser: false,
-                timestamp: new Date(q.updatedAt ?? Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-              });
-            }
           }
         });
-      } else if (Array.isArray(serverChat?.messages) && serverChat.messages.length > 0) {
+      } else if (Array.isArray(serverChat?.messages) && (serverChat.messages as unknown[]).length > 0) {
         // If the chat itself contains messages (older shape), map them directly
-        (serverChat.messages as any[]).forEach((m, i) => {
+        (serverChat.messages as unknown[]).forEach((m: unknown, i: number) => {
+          const id = getStringField(m, 'id', '_id') ?? `m-${serverChat._id ?? sessionId}-${i}`;
+          const content = getStringField(m, 'content', 'text', 'body') ?? '';
+          const isUser = getBooleanField(m, 'isUser') ?? ((getStringField(m, 'role') === 'user') ? true : false);
+          const timestamp = getTimestampFrom(m, 'timestamp', 'createdAt');
+
           mappedMessages.push({
-            id: String(m.id ?? m._id ?? `m-${serverChat._id ?? sessionId}-${i}`),
-            content: (m.content ?? m.text ?? m.body ?? '').toString(),
-            isUser: Boolean(m.isUser ?? m.role === 'user'),
-            timestamp: new Date(m.timestamp ?? m.createdAt ?? Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            id,
+            content,
+            isUser,
+            timestamp
           });
         });
       }
 
-      // If we couldn't derive messages, fallback to serverChat.messages or an empty array
+      // If we couldn't derive messages, fallback to serverChat.messages (if it's already in expected shape) or an empty array
       const finalMessages = mappedMessages.length > 0
         ? mappedMessages
-        : (Array.isArray(serverChat?.messages) ? (serverChat.messages as Message[]) : []);
+        : (isMessageArray(serverChat?.messages) ? serverChat.messages : []);
 
       // Build the normalized session object
       const normalized: ChatSession = {
-        id: serverChat._id ?? serverChat.id ?? sessionId,
-        title: serverChat.title ?? 'Chat',
+        id: getStringField(serverChat, '_id', 'id') ?? sessionId,
+        title: serverChat?.title ?? 'Chat',
         messages: finalMessages,
-        createdAt: serverChat.createdAt ?? new Date().toISOString(),
-        lastActive: serverChat.updatedAt ?? serverChat.lastActive ?? new Date().toISOString()
+        createdAt: serverChat?.createdAt ?? new Date().toISOString(),
+        lastActive: serverChat?.updatedAt ?? serverChat?.lastActive ?? new Date().toISOString()
       };
 
       // Prepend or update local sessions and open it
@@ -442,7 +429,6 @@ export function ChatApp({ userProfile, onUpdateProfile, onLogout }: ChatAppProps
       // setFetchingChatId(null); // if you used a fetching state
     }
   };
-
 
   const handleDeleteSession = async (sessionId: string) => {
     try {
@@ -605,7 +591,7 @@ export function ChatApp({ userProfile, onUpdateProfile, onLogout }: ChatAppProps
     }
   };
 
-  // Clear 
+  // Clear
   const handleClearAllHistory = async () => {
     try {
       // Attempt backend clear first (if backend supports DELETE /api/chat)
