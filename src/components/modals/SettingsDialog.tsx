@@ -50,10 +50,7 @@ interface SettingsDialogProps {
   chatSessions: ChatSession[];
   currentSessionId: string;
   userProfile: UserProfile;
-  onUpdateProfile: (profile: UserProfile) => void;
   onDeleteSession: (sessionId: string) => void;
-  onExportSessions: () => void;
-  onImportSessions: (file: File) => void;
   onClearAllHistory: () => void;
 }
 
@@ -62,9 +59,6 @@ export function SettingsDialog({
   onOpenChange,
   chatSessions,
   userProfile,
-  onUpdateProfile,
-  onImportSessions,
-  onExportSessions,
   onClearAllHistory
 }: SettingsDialogProps) {
   const [profile, setProfile] = useState<UserProfile>(userProfile);
@@ -74,26 +68,6 @@ export function SettingsDialog({
   useEffect(() => {
     setProfile(userProfile);
   }, [userProfile]);
-
-  const handleProfileUpdate = () => {
-    onUpdateProfile(profile);
-    try {
-      localStorage.setItem('qc_user', JSON.stringify(profile));
-    } catch (e) {
-      // ignore storage errors in strict environments
-      console.warn('Could not persist qc_user to localStorage', e);
-    }
-    // close dialog on save for a clearer flow
-    onOpenChange(false);
-  };
-
-
-  const handleFileImport = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      onImportSessions(file);
-    }
-  };
 
   const formatStorageSize = (sessions: ChatSession[]) => {
     try {
@@ -140,7 +114,6 @@ export function SettingsDialog({
                 <Card>
                   <CardHeader>
                     <CardTitle>Profile Information</CardTitle>
-                    <CardDescription>Update your personal information.</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
                       <div className="space-y-2">
@@ -173,15 +146,8 @@ export function SettingsDialog({
                         <option value="system">System</option>
                       </select>
                     </div>
-                    <div className="flex items-center justify-between">
-                      <Label>Notifications</Label>
-                      <Switch checked={profile.preferences.notifications} onCheckedChange={(c) => setProfile(p => ({ ...p, preferences: { ...p.preferences, notifications: c } }))} />
-                    </div>
                   </CardContent>
                 </Card>
-                <div className="flex justify-end">
-                  <Button onClick={handleProfileUpdate}><Save className="w-4 h-4 mr-2" />Save Changes</Button>
-                </div>
               </div>
             </ScrollArea>
           </TabsContent>
@@ -205,22 +171,6 @@ export function SettingsDialog({
                       <p className="text-2xl font-bold">{formatStorageSize(chatSessions)}</p>
                       <p className="text-sm text-muted-foreground">Used</p>
                     </div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Backup & Restore</CardTitle>
-                  </CardHeader>
-                  <CardContent className="flex space-x-2">
-                    <Button onClick={onExportSessions} variant="outline" className="flex-1">
-                      <Download className="w-4 h-4 mr-2" /> Export
-                    </Button>
-                    <Button asChild variant="outline" className="flex-1">
-                      <label htmlFor="import-file" className="cursor-pointer flex items-center justify-center w-full h-full">
-                        <Upload className="w-4 h-4 mr-2" /> Import
-                        <input type="file" id="import-file" className="sr-only" onChange={handleFileImport} accept=".json" />
-                      </label>
-                    </Button>
                   </CardContent>
                 </Card>
                 <Card>
