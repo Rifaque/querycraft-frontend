@@ -10,10 +10,11 @@ interface ChatHeaderProps {
   onModelChange: (model: string) => void;
   onDatabaseImport: () => void;
   onSettingsClick: () => void;
+  onWelcomeClick: () => void;
   sidebarTrigger?: React.ReactNode;
 }
 
-export function ChatHeader({ selectedModel, onModelChange, onDatabaseImport, onSettingsClick, sidebarTrigger }: ChatHeaderProps) {
+export function ChatHeader({ selectedModel, onModelChange, onDatabaseImport, onSettingsClick, onWelcomeClick, sidebarTrigger }: ChatHeaderProps) {
   return (
     <div className="sticky top-0 z-50 bg-card/95 backdrop-blur-lg border-b border-border shadow-sm">
       <div className="flex items-center justify-between px-6 py-4">
@@ -31,7 +32,7 @@ export function ChatHeader({ selectedModel, onModelChange, onDatabaseImport, onS
             /> */}
              <Database className="w-6 h-6 text-primary-foreground" />
           </div>
-          <h1 className="text-xl font-semibold text-foreground">
+          <h1 className="text-xl font-semibold text-foreground cursor-pointer" onClick={onWelcomeClick}>
             QueryCraft
           </h1>
         </div>

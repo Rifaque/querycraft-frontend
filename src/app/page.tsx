@@ -155,7 +155,7 @@ export default function Home() {
     case 'auth':
       return <AuthPage onLogin={handleLogin} onSignUp={handleSignUp} onBack={handleBackToIntro} />;
     case 'chat':
-      return <ChatApp userProfile={userProfile} onUpdateProfile={handleUpdateProfile} onLogout={handleLogout} />;
+      return <ChatApp userProfile={userProfile} onLogout={handleLogout} />;
     default:
       return <IntroPage onShowAuth={handleShowAuth} />;
   }

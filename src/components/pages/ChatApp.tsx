@@ -40,7 +40,6 @@ interface UserProfile {
 
 interface ChatAppProps {
   userProfile: UserProfile;
-  onUpdateProfile: (profile: UserProfile) => void;
   onLogout: () => void;
 }
 
@@ -81,24 +80,50 @@ interface QueryResponse {
   response?: string; // the actual generated string
 }
 
+// --- Small safe helpers / type guards ---
+function isNonEmptyString(v: unknown): v is string {
+  return typeof v === 'string' && v.trim().length > 0;
+}
 
-// --- Helpers: safe parsing utilities ---
+function getStringField(obj: unknown, ...keys: string[]): string | undefined {
+  if (typeof obj !== 'object' || obj === null) return undefined;
+  for (const k of keys) {
+    const v = (obj as Record<string, unknown>)[k];
+    if (isNonEmptyString(v)) return v;
+  }
+  return undefined;
+}
+
+function getBooleanField(obj: unknown, key: string): boolean | undefined {
+  if (typeof obj !== 'object' || obj === null) return undefined;
+  const v = (obj as Record<string, unknown>)[key];
+  if (typeof v === 'boolean') return v;
+  return undefined;
+}
+
+function getTimestampFrom(obj: unknown, ...keys: string[]): string {
+  const s = getStringField(obj, ...keys);
+  if (s) return new Date(s).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
 function isMessageArray(v: unknown): v is Message[] {
   return Array.isArray(v) && v.every((m) => {
-    const mm = m as unknown as Record<string, unknown>;
-    return typeof mm.id === 'string' && typeof mm.content === 'string';
+    if (typeof m !== 'object' || m === null) return false;
+    const mm = m as Record<string, unknown>;
+    return typeof mm.id === 'string' && typeof mm.content === 'string' && typeof mm.isUser === 'boolean';
   });
 }
 
 function normalizeChat(raw: RawChatFromServer): ChatSession {
-  const id = raw._id || raw.id || String(Date.now()) ;
+  const id = raw._id || raw.id || String(Date.now());
   const title = raw.title || 'Chat';
   const messages: Message[] = isMessageArray(raw.messages)
     ? raw.messages
     : [
         {
           id: Date.now().toString(),
-          content: 'This chat has no structured messages (server returned unexpected shape).',
+          content: '',
           isUser: false,
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         }
@@ -109,12 +134,12 @@ function normalizeChat(raw: RawChatFromServer): ChatSession {
     title,
     messages,
     createdAt: raw.createdAt || new Date().toISOString(),
-    lastActive: raw.updatedAt || raw.lastActive || new Date().toISOString()
-    , isLocal: false
+    lastActive: raw.updatedAt || raw.lastActive || new Date().toISOString(),
+    isLocal: false
   };
 }
 
-export function ChatApp({ userProfile, onUpdateProfile, onLogout }: ChatAppProps) {
+export function ChatApp({ userProfile, onLogout }: ChatAppProps) {
   const [currentSessionId, setCurrentSessionId] = useState<string>(''); // start empty
   const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
 
@@ -148,35 +173,13 @@ export function ChatApp({ userProfile, onUpdateProfile, onLogout }: ChatAppProps
       title,
       messages: [],
       createdAt: new Date().toISOString(),
-      lastActive: new Date().toISOString()
-      , isLocal: true
+      lastActive: new Date().toISOString(),
+      isLocal: true
     };
     // prepend locally
     setChatSessions((prev) => [newChat, ...prev]);
     setCurrentSessionId(id);
     return id;
-  }
-
-  // Merge a local chat (identified by localId) into a server chat returned by the backend.
-  // Preserves local messages and replaces the local placeholder with the server chat.
-  function mergeLocalToServer(localId: string, rawServerChat: RawChatFromServer) {
-    const serverNormalized = normalizeChat(rawServerChat);
-
-    setChatSessions((prev) => {
-      const local = prev.find((c) => c.id === localId);
-      // remove any existing item having serverNormalized.id (avoid duplicates), also remove local placeholder
-      const filtered = prev.filter((c) => c.id !== localId && c.id !== serverNormalized.id);
-
-      const merged = {
-        ...serverNormalized,
-        messages: local?.messages?.length ? local!.messages : serverNormalized.messages,
-        isLocal: false
-      };
-
-      return [merged, ...filtered];
-    });
-
-    setCurrentSessionId(serverNormalized.id);
   }
 
   /**
@@ -195,7 +198,7 @@ export function ChatApp({ userProfile, onUpdateProfile, onLogout }: ChatAppProps
           // If 404/403 etc, stop polling and show error in placeholder
           if (res.status === 404 || res.status === 403) {
             const errText = `Server returned ${res.status}`;
-            updateSessionMessages(sessionId, messages => 
+            updateSessionMessages(sessionId, messages =>
               messages.map(m => (m.id === placeholderMessageId ? { ...m, content: errText } : m))
             );
             return;
@@ -258,10 +261,8 @@ export function ChatApp({ userProfile, onUpdateProfile, onLogout }: ChatAppProps
     return s?.messages?.[0]?.content?.slice?.(0, 50) || '';
   }
 
-
-  const currentSession = chatSessions.find((s) => s.id === currentSessionId) || chatSessions[0] || null;
+  const currentSession = currentSessionId ? chatSessions.find((s) => s.id === currentSessionId) ?? null : null;
   const messages = currentSession?.messages || [];
-
 
   const prependOrUpdateSession = (chat: Partial<ChatSession> & { id: string }) => {
     setChatSessions((prev) => {
@@ -291,10 +292,12 @@ export function ChatApp({ userProfile, onUpdateProfile, onLogout }: ChatAppProps
           const data = (await res.json()) as unknown;
           if (Array.isArray(data) && data.length > 0) {
             const chats = data.map((c) => normalizeChat(c as RawChatFromServer));
+            // keep chats loaded but do NOT auto-open any chat — show Welcome screen instead
             setChatSessions(chats);
-            setCurrentSessionId(chats[0].id);
+            // DO NOT set currentSessionId(chats[0].id) — leave it empty to show Welcome.
+            setCurrentSessionId(''); // explicit about showing welcome
           } else {
-            // no server chats: keep client empty => show NewChatScreen
+            // no server chats: keep client empty => show Welcome
             setChatSessions([]);
             setCurrentSessionId('');
           }
@@ -307,17 +310,124 @@ export function ChatApp({ userProfile, onUpdateProfile, onLogout }: ChatAppProps
         console.error('Load chats error', err);
       }
     })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-
-  // When user clicks "New chat", only create a local chat. Server chat will be created
-  // only when the user sends the first message in that chat.
+  // When user clicks "New chat" — behave exactly like clicking the QueryCraft header:
+  // show the Welcome screen (no local chat creation). The chat will be created only
+  // when the user sends their first query from the welcome screen.
   const handleNewChat = () => {
-    createLocalChat('New Chat');
+    // Show welcome / no chat selected
+    setCurrentSessionId('');
+
+    // Clear typing indicator/state to avoid stale UI when switching to welcome
+    setIsTyping(false);
+
+    // Optional: If you have a mobile sidebar open, you can close it here if you
+    // expose a handler / state. For now we leave that to the sidebar trigger.
   };
 
-  const handleSelectSession = (sessionId: string) => {
-    setCurrentSessionId(sessionId);
+  // Put this inside ChatApp (replace the existing handleSelectSession)
+  const handleSelectSession = async (sessionId: string) => {
+    if (!sessionId) return;
+
+    try {
+      const res = await fetch(`${API_BASE}/api/chat/${sessionId}`, {
+        headers: authHeaders(),
+      });
+
+      if (!res.ok) {
+        // If not found or unauthorized, fall back to selecting any locally-known session
+        console.warn('[handleSelectSession] fetch failed', res.status, res.statusText);
+        const local = chatSessions.find((s) => s.id === sessionId);
+        if (local) {
+          // open local version as fallback
+          setCurrentSessionId(local.id);
+        }
+        return;
+      }
+
+      const body = (await res.json()) as unknown;
+
+      // The backend endpoint you showed returns { chat, queries }
+      // But be defensive: handle a few possible shapes gracefully.
+      const serverChat = (body && ((body as Record<string, unknown>).chat || body)) as RawChatFromServer;
+      const queries = Array.isArray((body as Record<string, unknown>)?.queries)
+        ? ((body as Record<string, unknown>).queries as unknown[])
+        : (Array.isArray(body) ? (body as unknown[]) : []);
+
+      // Build messages in the shape your UI expects.
+      const mappedMessages: Message[] = [];
+
+      if (Array.isArray(queries) && queries.length > 0) {
+        queries.forEach((q: unknown, idx: number) => {
+          const qId = getStringField(q, '_id', 'id') ?? `q-${sessionId}-${idx}`;
+
+          // If the query doc stores a user prompt separately, add it as a user message.
+          const userPrompt = getStringField(q, 'prompt', 'input');
+          if (userPrompt) {
+            mappedMessages.push({
+              id: `${qId}-u`,
+              content: userPrompt,
+              isUser: true,
+              timestamp: getTimestampFrom(q, 'createdAt', 'created_at')
+            });
+          }
+
+          // Pull out response text from common fields
+          const responseText = getStringField(q, 'response', 'answer', 'output', 'result', 'text', 'content', 'message');
+
+          if (responseText) {
+            mappedMessages.push({
+              id: `${qId}-a`,
+              content: responseText,
+              isUser: false,
+              timestamp: getTimestampFrom(q, 'updatedAt', 'createdAt', 'created_at')
+            });
+          }
+        });
+      } else if (Array.isArray(serverChat?.messages) && (serverChat.messages as unknown[]).length > 0) {
+        // If the chat itself contains messages (older shape), map them directly
+        (serverChat.messages as unknown[]).forEach((m: unknown, i: number) => {
+          const id = getStringField(m, 'id', '_id') ?? `m-${serverChat._id ?? sessionId}-${i}`;
+          const content = getStringField(m, 'content', 'text', 'body') ?? '';
+          const isUser = getBooleanField(m, 'isUser') ?? ((getStringField(m, 'role') === 'user') ? true : false);
+          const timestamp = getTimestampFrom(m, 'timestamp', 'createdAt');
+
+          mappedMessages.push({
+            id,
+            content,
+            isUser,
+            timestamp
+          });
+        });
+      }
+
+      // If we couldn't derive messages, fallback to serverChat.messages (if it's already in expected shape) or an empty array
+      const finalMessages = mappedMessages.length > 0
+        ? mappedMessages
+        : (isMessageArray(serverChat?.messages) ? serverChat.messages : []);
+
+      // Build the normalized session object
+      const normalized: ChatSession = {
+        id: getStringField(serverChat, '_id', 'id') ?? sessionId,
+        title: serverChat?.title ?? 'Chat',
+        messages: finalMessages,
+        createdAt: serverChat?.createdAt ?? new Date().toISOString(),
+        lastActive: serverChat?.updatedAt ?? serverChat?.lastActive ?? new Date().toISOString()
+      };
+
+      // Prepend or update local sessions and open it
+      prependOrUpdateSession(normalized);
+      setCurrentSessionId(normalized.id);
+    } catch (err) {
+      console.error('[handleSelectSession] error fetching chat by id', err);
+      // fallback: open a locally-known session if present
+      const fallback = chatSessions.find((s) => s.id === sessionId);
+      if (fallback) setCurrentSessionId(fallback.id);
+    } finally {
+      // setFetchingChatId(null); // if you used a fetching state
+    }
   };
 
   const handleDeleteSession = async (sessionId: string) => {
@@ -339,9 +449,10 @@ export function ChatApp({ userProfile, onUpdateProfile, onLogout }: ChatAppProps
 
   // --- Send message: POST /api/query ---
   const handleSendMessage = async (content: string) => {
-    // ensure we have a chat id - create a local chat immediately for UX if none exists
-    let sessionId = currentSessionId || createLocalChat('New Chat');
+    // Determine or create session: if no chat selected, create server chat first.
+    let sessionId = currentSessionId;
 
+    // Create the user message object (timestamp is generated when we append)
     const userMessage: Message = {
       id: Date.now().toString(),
       content,
@@ -349,34 +460,42 @@ export function ChatApp({ userProfile, onUpdateProfile, onLogout }: ChatAppProps
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
 
-    // append user msg locally first (use the sessionId defined above)
-    updateSessionMessages(sessionId, (prev) => [...prev, userMessage]);
-    setIsTyping(true);
-
-    // If this is a local-only chat (no server chat yet), create server chat now and migrate messages.
-    const sessionObj = chatSessions.find((s) => s.id === sessionId);
-    if (sessionObj?.isLocal) {
+    // If no session selected, create a server chat (POST /api/chat).
+    if (!sessionId) {
       try {
         const res = await fetch(`${API_BASE}/api/chat`, {
           method: 'POST',
           headers: authHeaders(),
-          body: JSON.stringify({ title: sessionObj.title || content.slice(0, 50) })
+          body: JSON.stringify({ title: content.slice(0, 50) || 'New Chat' })
         });
 
         if (res.ok) {
           const serverChat = (await res.json()) as RawChatFromServer;
-          // Merge local messages into server chat and switch to server id
-          mergeLocalToServer(sessionId, serverChat);
-          // ensure we use server id from normalizeChat
-          sessionId = (serverChat._id || serverChat.id) ?? sessionId;
+          const normalized = normalizeChat(serverChat);
+          // add server chat to state (no messages yet)
+          prependOrUpdateSession({ id: normalized.id, title: normalized.title, messages: normalized.messages, createdAt: normalized.createdAt, lastActive: normalized.lastActive });
+          setCurrentSessionId(normalized.id);
+          sessionId = normalized.id;
         } else {
-          console.warn('Failed to create server chat; continuing with local chat', res.status);
+          console.warn('Failed to create server chat; falling back to local chat', res.status);
+          sessionId = createLocalChat('New Chat');
         }
       } catch (err) {
-        console.warn('Network error creating server chat, continuing with local chat', err);
+        console.warn('Network error creating server chat, falling back to local chat', err);
+        sessionId = createLocalChat('New Chat');
       }
     }
 
+    // Ensure sessionId exists now (either server-provided or local fallback)
+    if (!sessionId) {
+      sessionId = createLocalChat('New Chat');
+    }
+
+    // Append the user message to the chosen session
+    updateSessionMessages(sessionId, (prev) => [...prev, userMessage]);
+    setIsTyping(true);
+
+    // Now call the query endpoint (POST /api/query)
     try {
       const payload = { chatId: sessionId, prompt: content, model: selectedModel };
       const res = await fetch(`${API_BASE}/api/query`, {
@@ -385,17 +504,16 @@ export function ChatApp({ userProfile, onUpdateProfile, onLogout }: ChatAppProps
         body: JSON.stringify(payload)
       });
 
-      // extract body if present (safe)
+      // try to parse body safely
       let data: QueryResponse | null = null;
       try {
-        data = res.ok || res.status === 202 ? (await res.json()) as QueryResponse : (await res.json()) as QueryResponse;
+        data = (await res.json()) as QueryResponse;
       } catch {
         data = null;
       }
 
-      // When server returns pending (202) or minimal with status pending:
       if (res.status === 202 || data?.status === 'pending') {
-        // Create placeholder AI message and start polling
+        // placeholder then poll
         const placeholderId = `ai-${data?.queryId || Date.now().toString()}`;
         const placeholderMsg: Message = {
           id: placeholderId,
@@ -405,20 +523,18 @@ export function ChatApp({ userProfile, onUpdateProfile, onLogout }: ChatAppProps
         };
         updateSessionMessages(sessionId, (prev) => [...prev, placeholderMsg]);
 
-        // if backend returned a new chatId (server created chat), ensure we update local sessions
+        // If server returned a chatId (maybe a different id), ensure we update local sessions and switch to it
         if (data?.chatId) {
-          prependOrUpdateSession({ id: data.chatId, title: content.slice(0, 50), messages: [...(messages || []), userMessage, placeholderMsg] });
-          // switch to new chat id
-          // Note: server might have created a different chat id than client session; update sessionId for polling
+          prependOrUpdateSession({ id: data.chatId, title: content.slice(0, 50), messages: [...(getSessionMessagesCopy(sessionId, '', '') || []), userMessage, placeholderMsg] });
           setCurrentSessionId(data.chatId);
+          // ensure we poll for the server chat id
+          pollQueryResult(data?.queryId || '', placeholderId, data?.chatId || sessionId);
+        } else {
+          pollQueryResult(data?.queryId || '', placeholderId, sessionId);
         }
-
-        // Poll in background (no await here)
-        pollQueryResult(data?.queryId || '', placeholderId, data?.chatId || sessionId);
         return;
       }
 
-      // If sync response (done)
       if (res.ok && data) {
         const aiText = data.response || 'No response from LLM';
         const aiMessage: Message = {
@@ -427,19 +543,17 @@ export function ChatApp({ userProfile, onUpdateProfile, onLogout }: ChatAppProps
           isUser: false,
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         };
-
         updateSessionMessages(sessionId, (prev) => [...prev, aiMessage]);
 
-        // If backend returned a chatId (created new chat), ensure local session uses it
         if (data.chatId) {
-          prependOrUpdateSession({ id: data.chatId, title: content.slice(0, 50), messages: [...(messages || []), userMessage, aiMessage] });
+          // Backend claims/created a chat id; ensure local session uses it
+          prependOrUpdateSession({ id: data.chatId, title: content.slice(0, 50), messages: [...(getSessionMessagesCopy(sessionId, '', '') || []), userMessage, aiMessage] });
           setCurrentSessionId(data.chatId);
         }
-
         return;
       }
 
-      // Non-ok response handling (use your existing flow)
+      // Non-ok response handling
       let errBody: unknown = null;
       try {
         errBody = await res.json();
@@ -470,42 +584,14 @@ export function ChatApp({ userProfile, onUpdateProfile, onLogout }: ChatAppProps
         isUser: false,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
-      updateSessionMessages(currentSessionId || Date.now().toString(), (prev) => [...prev, aiMessage]);
+      updateSessionMessages(sessionId, (prev) => [...prev, aiMessage]);
       console.error('Network or LLM error', err);
     } finally {
       setIsTyping(false);
     }
   };
 
-
-  // --- Export / Import / Clear (client-friendly implementations) ---
-  const handleExportSessions = () => {
-    const blob = new Blob([JSON.stringify(chatSessions, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'querycraft-chats.json';
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  const handleImportSessions = (file: File) => {
-    const reader = new FileReader();
-    reader.onload = (e: ProgressEvent<FileReader>) => {
-      try {
-        const text = String(e.target?.result || '[]');
-        const json = JSON.parse(text) as unknown;
-        const imported = Array.isArray(json)
-          ? (json as unknown[]).map((c) => normalizeChat(c as RawChatFromServer))
-          : [];
-        setChatSessions((prev) => [...imported, ...prev]);
-      } catch (err: unknown) {
-        console.error('Invalid import file', err);
-      }
-    };
-    reader.readAsText(file);
-  };
-
+  // Clear
   const handleClearAllHistory = async () => {
     try {
       // Attempt backend clear first (if backend supports DELETE /api/chat)
@@ -544,6 +630,7 @@ export function ChatApp({ userProfile, onUpdateProfile, onLogout }: ChatAppProps
           onModelChange={setSelectedModel}
           onDatabaseImport={() => setShowDatabaseDialog(true)}
           onSettingsClick={() => setShowSettingsDialog(true)}
+          onWelcomeClick={() => setCurrentSessionId('')}
           sidebarTrigger={
             <MobileSidebarTrigger
               chatSessions={chatSessions}
@@ -557,7 +644,7 @@ export function ChatApp({ userProfile, onUpdateProfile, onLogout }: ChatAppProps
             />
           }
         />
-        <ChatWindow messages={messages} isTyping={isTyping} />
+        <ChatWindow messages={messages} isTyping={isTyping} showWelcome={!currentSessionId} />
         <ChatInput onSendMessage={handleSendMessage} disabled={isTyping} />
       </div>
 
@@ -570,10 +657,7 @@ export function ChatApp({ userProfile, onUpdateProfile, onLogout }: ChatAppProps
         chatSessions={chatSessions}
         currentSessionId={currentSessionId}
         userProfile={userProfile}
-        onUpdateProfile={onUpdateProfile}
         onDeleteSession={handleDeleteSession}
-        onExportSessions={handleExportSessions}
-        onImportSessions={handleImportSessions}
         onClearAllHistory={handleClearAllHistory}
       />
     </div>

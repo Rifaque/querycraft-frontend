@@ -118,7 +118,7 @@ export function useAutoLogin(onSuccess: (u: UserProfile) => void, onFailure?: ()
           onFailure?.();
         }
         // still helpful to log the error for debugging
-        // eslint-disable-next-line no-console
+
         console.error(err);
       }
     })();
