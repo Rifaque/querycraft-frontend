@@ -34,14 +34,14 @@ export function IntroPage({ onShowAuth }: IntroPageProps) {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: 'var(--background)' }}>
+    <div className="min-h-screen flex flex-col " style={{ background: 'var(--background)' }}>
       {/* Navigation Header */}
       <nav className="w-full px-6 py-4 flex items-center justify-between backdrop-blur-sm bg-card/80 border-b border-border">
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center">
-            <Database className="w-6 h-6 text-primary-foreground" />
+          <div className="w-10 h-10 bg-gradient-to-r from-sky-500 to-blue-600 bg-primary rounded-xl flex items-center justify-center">
+            <Database className="w-6 h-6 text-white" />
           </div>
-          <span className="text-2xl font-bold text-foreground">
+          <span className="text-2xl font-bold text-foreground bg-gradient-to-r from-sky-600 to-blue-600 bg-clip-text text-transparent">
             QueryCraft
           </span>
         </div>
@@ -50,12 +50,13 @@ export function IntroPage({ onShowAuth }: IntroPageProps) {
           <Button 
             variant="ghost" 
             onClick={onShowAuth}
+            className="hover:bg-sky-50 dark:hover:bg-gray-800 transition-colors"
           >
             Sign In
           </Button>
           <Button 
             onClick={onShowAuth}
-            className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg"
+            className="bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-300"
           >
             Get Started
             <ArrowRight className="w-4 h-4 ml-2" />
@@ -74,9 +75,9 @@ export function IntroPage({ onShowAuth }: IntroPageProps) {
             transition={{ duration: 0.8 }}
             className="mb-16"
           >
-            <div className="inline-flex items-center px-4 py-2 bg-secondary rounded-full mb-8 border">
-              <Sparkles className="w-4 h-4 text-primary mr-2" />
-              <span className="text-sm font-medium text-secondary-foreground">
+            <div className="inline-flex items-center px-4 py-2 bg-sky-100 dark:bg-sky-900/30 rounded-full mb-8">
+              <Sparkles className="w-4 h-4 text-sky-600 dark:text-sky-400 mr-2" />
+              <span className="text-sm font-medium text-secondary-foreground text-sky-700 dark:text-sky-300">
                 AI-Powered Database Assistant
               </span>
             </div>
@@ -84,7 +85,7 @@ export function IntroPage({ onShowAuth }: IntroPageProps) {
             <h1 className="text-6xl md:text-7xl font-bold mb-6 text-foreground leading-tight">
               Chat with Your
               <br />
-              <span className="text-primary">
+              <span className="bg-gradient-to-r from-sky-500 to-blue-600 bg-clip-text text-transparent text-primary">
                 Database
               </span>
             </h1>
@@ -98,11 +99,21 @@ export function IntroPage({ onShowAuth }: IntroPageProps) {
               <Button 
                 size="lg"
                 onClick={onShowAuth}
-                className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 text-lg font-semibold shadow-2xl"
+                className="bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white px-8 py-4 text-lg font-semibold shadow-2xl hover:shadow-3xl transition-all duration-300 transform hover:scale-105"
               >
                 Start Chatting Now
                 <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
+              <Button 
+                variant="outline" 
+                size="lg"
+                onClick={onShowAuth}
+                className="px-8 py-4 text-lg font-semibold border-sky-200 dark:border-sky-700 hover:bg-sky-50 dark:hover:bg-sky-900/20 transition-colors"
+              >
+                Sign In
+              </Button>
+
+
             </div>
           </motion.div>
 
@@ -119,9 +130,9 @@ export function IntroPage({ onShowAuth }: IntroPageProps) {
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.4 + index * 0.1 }}
-                className="p-8 bg-card rounded-2xl border transition-all duration-300 hover:border-primary/50 hover:shadow-xl"
+                className="p-8 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl border border-sky-100 dark:border-gray-700 hover:border-sky-200 dark:hover:border-sky-600 transition-all duration-300 hover:shadow-xl hover:scale-105"
               >
-                <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mb-6 mx-auto text-primary-foreground">
+                <div className="w-16 h-16 bg-gradient-to-r from-sky-500 to-blue-600 rounded-2xl flex items-center justify-center mb-6 mx-auto text-white">
                   {feature.icon}
                 </div>
                 <h3 className="text-xl font-semibold mb-4 text-foreground">
@@ -139,7 +150,7 @@ export function IntroPage({ onShowAuth }: IntroPageProps) {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.8 }}
-            className="bg-primary rounded-3xl p-12 text-primary-foreground"
+            className="bg-gradient-to-r from-sky-500 to-blue-600 rounded-3xl p-12 text-white"
           >
             <h2 className="text-4xl font-bold mb-4">
               Ready to Transform Your Data Experience?
@@ -150,7 +161,7 @@ export function IntroPage({ onShowAuth }: IntroPageProps) {
             <Button 
               size="lg"
               onClick={onShowAuth}
-              className="bg-primary-foreground text-primary hover:bg-primary-foreground/90 px-8 text-lg font-semibold shadow-xl"
+              className="bg-white text-sky-600 hover:bg-gray-100 px-8 py-4 text-lg font-semibold shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105"
             >
               Get Started for Free
               <ArrowRight className="w-5 h-5 ml-2" />
@@ -163,7 +174,7 @@ export function IntroPage({ onShowAuth }: IntroPageProps) {
       <footer className="w-full px-6 py-8 border-t bg-card/50">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between">
           <div className="flex items-center space-x-3 mb-4 md:mb-0">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-gradient-to-r from-sky-500 to-blue-600 rounded-lg flex items-center justify-center">
               <Database className="w-5 h-5 text-primary-foreground" />
             </div>
             <span className="text-lg font-semibold text-muted-foreground">
