@@ -27,7 +27,45 @@
 
 /* you can still set dark tokens by scoping a .dark class */
 @layer base {
-  :root { /* keep if you want root token fallback — already declared by @theme above */ }
+  :root { 
+     --font-size: 14px;
+      --background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%);
+      --foreground: oklch(0.145 0 0);
+      --card: #ffffff;
+      --card-foreground: oklch(0.145 0 0);
+      --popover: oklch(1 0 0);
+      --popover-foreground: oklch(0.145 0 0);
+      --primary: #0ea5e9;
+      --primary-foreground: oklch(1 0 0);
+      --secondary: #e0f2fe;
+      --secondary-foreground: #0369a1;
+      --muted: #f1f5f9;
+      --muted-foreground: #64748b;
+      --accent: #dbeafe;
+      --accent-foreground: #1e40af;
+      --destructive: #ef4444;
+      --destructive-foreground: #ffffff;
+      --border: rgba(14, 165, 233, 0.2);
+      --input: transparent;
+      --input-background: #f8fafc;
+      --switch-background: #cbd5e1;
+      --font-weight-medium: 500;
+      --font-weight-normal: 400;
+      --ring: #0ea5e9;
+      --chart-1: #0ea5e9;
+      --chart-2: #3b82f6;
+      --chart-3: #06b6d4;
+      --chart-4: #8b5cf6;
+      --chart-5: #10b981;
+      --radius: 0.75rem;
+      --sidebar: rgba(248, 250, 252, 0.95);
+      --sidebar-foreground: oklch(0.145 0 0);
+      --sidebar-primary: #0ea5e9;
+      --sidebar-primary-foreground: oklch(0.985 0 0);
+      --sidebar-accent: rgba(224, 242, 254, 0.8);
+      --sidebar-accent-foreground: oklch(0.205 0 0);
+      --sidebar-border: rgba(14, 165, 233, 0.15);
+      --sidebar-ring: #0ea5e9;/* keep if you want root token fallback — already declared by @theme above */ }
 
   .dark {
     --background: 222.2 84% 4.9%;
@@ -49,6 +87,7 @@
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 212.7 26.8% 83.9%;
+
   }
 
   * {
