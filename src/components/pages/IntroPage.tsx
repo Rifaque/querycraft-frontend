@@ -15,7 +15,8 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Canvas } from "@react-three/fiber";
-import { OrbitControls, Float, Html, ContactShadows, useGLTF } from "@react-three/drei";
+import type { GLTF } from "three-stdlib";
+import { Float, ContactShadows, useGLTF } from "@react-three/drei";
 
 // ------------------------------------------------------------------
 // QueryCraft — EPIC v2
@@ -26,8 +27,6 @@ import { OrbitControls, Float, Html, ContactShadows, useGLTF } from "@react-thre
 // Recommended installs:
 // npm i framer-motion three @react-three/fiber @react-three/drei react-lottie-player lucide-react
 // (plus tailwind, shadcn/ui or your component system)
-//
-// Drop an optimized glb at /public/models/querycraft.glb to replace primitives.
 // ------------------------------------------------------------------
 
 // -------------------------- Utilities ---------------------------------
@@ -105,9 +104,9 @@ function ParticlesBackground() {
 // ------------------------ 3D Model & fallback --------------------------
 function QueryCraftModel({ modelUrl }: { modelUrl?: string }) {
   try {
-    const gltf = useGLTF(modelUrl || "/models/querycraft.glb");
-    return <primitive object={(gltf as any).scene} dispose={null} />;
-  } catch (e) {
+    const gltf = useGLTF(modelUrl || "/models/querycraft.glb") as GLTF;
+    return <primitive object={gltf.scene} dispose={null} />;
+  } catch {
     return (
       <group rotation={[0.4, 0.8, 0.1]}>
         <Float speed={1.1} floatIntensity={1.2} rotationIntensity={0.6}>
@@ -117,13 +116,13 @@ function QueryCraftModel({ modelUrl }: { modelUrl?: string }) {
           </mesh>
         </Float>
         <Float speed={0.9} floatIntensity={1.6} rotationIntensity={0.4}>
-          <mesh position={[2.1, 0.5, -0.6]} scale={[0.82, 0.82, 0.82]}> 
+          <mesh position={[2.1, 0.5, -0.6]} scale={[0.82, 0.82, 0.82]}>
             <boxGeometry args={[0.9, 0.9, 0.9]} />
             <meshStandardMaterial roughness={0.25} metalness={0.85} />
           </mesh>
         </Float>
         <Float speed={1.4} floatIntensity={0.9} rotationIntensity={0.5}>
-          <mesh position={[-2.2, -0.7, -0.8]} scale={[0.6, 0.6, 0.6]}> 
+          <mesh position={[-2.2, -0.7, -0.8]} scale={[0.6, 0.6, 0.6]}>
             <icosahedronGeometry args={[0.74, 0]} />
             <meshStandardMaterial roughness={0.15} metalness={0.9} />
           </mesh>
@@ -133,6 +132,7 @@ function QueryCraftModel({ modelUrl }: { modelUrl?: string }) {
   }
 }
 
+
 function Hero3D({ modelUrl }: { modelUrl?: string }) {
   return (
     <div className="w-full h-96 md:h-[34rem] rounded-3xl overflow-hidden border border-white/6 bg-gradient-to-br from-sky-900/10 to-blue-900/6 backdrop-blur">
@@ -141,7 +141,7 @@ function Hero3D({ modelUrl }: { modelUrl?: string }) {
         <directionalLight intensity={0.95} position={[5, 6, 5]} />
         <directionalLight intensity={0.2} position={[-5, -5, -2]} />
         <Suspense fallback={null}>
-          <QueryCraftModel modelUrl="/models/querycraft.glb" />
+          <QueryCraftModel modelUrl={modelUrl || "/models/querycraft.glb"} />
           <ContactShadows position={[0, -1.7, 0]} opacity={0.45} blur={2.6} />
         </Suspense>
       </Canvas>
@@ -163,26 +163,29 @@ function FeatureCard({ icon, title, desc }: { icon: React.ReactNode; title: stri
 }
 
 // -------------------------- Testimonials --------------------------------
-function Testimonials() {
-  const slides = [
-    { quote: "QueryCraft turned our analysts into data ninjas — instant insights.", who: "Maya, Data Lead @ Nova" },
-    { quote: "The NL→SQL demo sold our CEO in 5 minutes. Game changer.", who: "Arun, CTO @ ScaleOps" },
-    { quote: "Safe, fast, and delightful — we migrated our dashboards to QueryCraft.", who: "Leah, BI Manager" },
-  ];
-  const [i, setI] = useState(0);
-  useEffect(() => { const t = setInterval(() => setI((s) => (s + 1) % slides.length), 4200); return () => clearInterval(t); }, []);
-  return (
-    <div className="p-6 rounded-2xl bg-white/6 border border-white/6">
-      <div className="flex items-center gap-4">
-        <div className="text-3xl"><Star className="w-6 h-6 text-amber-400" /></div>
-        <div>
-          <div className="text-sm text-white/80 italic">"{slides[i].quote}"</div>
-          <div className="text-xs text-white/60 mt-2">— {slides[i].who}</div>
-        </div>
-      </div>
-    </div>
-  );
-}
+// function Testimonials() {
+//   const slides = [
+//     { quote: "QueryCraft turned our analysts into data ninjas — instant insights.", who: "Maya, Data Lead @ Nova" },
+//     { quote: "The NL→SQL demo sold our CEO in 5 minutes. Game changer.", who: "Arun, CTO @ ScaleOps" },
+//     { quote: "Safe, fast, and delightful — we migrated our dashboards to QueryCraft.", who: "Leah, BI Manager" },
+//   ];
+//   const [i, setI] = useState(0);
+//   useEffect(() => {
+//     const t = setInterval(() => setI((s) => (s + 1) % slides.length), 4200);
+//     return () => clearInterval(t);
+//   }, [slides.length]);
+//   return (
+//     <div className="p-6 rounded-2xl bg-white/6 border border-white/6">
+//       <div className="flex items-center gap-4">
+//         <div className="text-3xl"><Star className="w-6 h-6 text-amber-400" /></div>
+//         <div>
+//           <div className="text-sm text-white/80 italic">&quot;{slides[i].quote}&quot;</div>
+//           <div className="text-xs text-white/60 mt-2">— {slides[i].who}</div>
+//         </div>
+//       </div>
+//     </div>
+//   );
+// }
 
 // -------------------------- Main Page ----------------------------------
 export default function IntroPageV2({ onShowAuth }: { onShowAuth?: () => void }) {
