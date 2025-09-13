@@ -91,17 +91,20 @@ export function ChatSidebar({
 
 
   return (
-    <div className="flex flex-col h-full bg-card/95 backdrop-blur-xl border-r border-border">
-      <div className="p-4 border-b border-border">
+    <div className="flex flex-col h-full bg-sidebar/95 backdrop-blur-xl border-r border-sidebar-border shadow-lg">
+      <div className="p-4 border-b border-sidebar-border bg-sidebar/80 backdrop-blur-sm">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="font-semibold text-foreground">Chat History</h2>
+          <h2 className="ffont-semibold text-sidebar-foreground">Chat History</h2>
           {isMobile && onClose && (
-            <Button variant="ghost" size="icon" className="text-muted-foreground" onClick={onClose}>
+            <Button variant="ghost" size="icon" className="text-sidebar-foreground hover:bg-sidebar-accent" onClick={onClose}>
               <X className="w-4 h-4" />
             </Button>
           )}
         </div>
-        <Button onClick={onNewChat} className="w-full">
+        <Button 
+          onClick={onNewChat}
+          className="w-full bg-blue-500 hover:bg-blue-600/90 text-white shadow-sm"
+        >
           <Plus className="w-4 h-4 mr-2" />
           New Chat
         </Button>
