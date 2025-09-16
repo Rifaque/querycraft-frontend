@@ -283,7 +283,7 @@ export default function IntroPageV2({ onShowAuth }: { onShowAuth?: () => void })
       <footer className="relative z-30 w-full px-6 py-8 border-t border-white/6 bg-gradient-to-t from-black/20 to-transparent">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3"><div className="w-10 h-10 rounded-lg bg-gradient-to-br from-sky-500 to-blue-600 flex items-center justify-center"><Database className="w-5 h-5 text-white" /></div><div><div className="text-sm">QueryCraft</div><div className="text-xs text-white/60">© 2025 QueryCraft</div></div></div>
-          <div className="text-sm text-white/60">Built with ❤️ · Designed for devs & analysts</div>
+          <div className="text-sm text-white/60">Built by <a href="https://hubzero.in/" className="no-underline" target="_blank" rel="noopener noreferrer">Hub Zero</a> · Designed for devs & analysts</div>
         </div>
       </footer>
     </div>
