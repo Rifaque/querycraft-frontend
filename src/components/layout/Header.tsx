@@ -9,7 +9,7 @@ export const Header = () => {
           Query<span className="text-electric-blue">Craft</span>
         </h1>
         <div className="hidden sm:flex items-center gap-2 cursor-pointer rounded-lg bg-gray-800 px-3 py-1.5 text-sm font-medium text-gray-300 hover:bg-gray-700">
-          <span>Merlin AI</span>
+          <span>Mistral AI</span>
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 20 20"

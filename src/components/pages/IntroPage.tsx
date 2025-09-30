@@ -18,6 +18,8 @@ import { Canvas } from "@react-three/fiber";
 import type { GLTF } from "three-stdlib";
 import { Float, ContactShadows, useGLTF } from "@react-three/drei";
 
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE || '';
+
 // ------------------------------------------------------------------
 // QueryCraft — EPIC v2
 // - This file is intentionally modular (multiple small components in one file)
@@ -196,18 +198,57 @@ export default function IntroPageV2({ onShowAuth }: { onShowAuth?: () => void })
     { icon: <Shield className="w-6 h-6" />, title: "Enterprise-ready", description: "Audit logs, RBAC and row-level security." },
   ];
 
+  const [queryInput, setQueryInput] = useState(""); 
   const [result, setResult] = useState<string | null>(null);
   const [isTyping, setIsTyping] = useState(false);
   const typed = useTypingStream(result || "", 18);
+  const inFlightRef = useRef(false);
 
-  function runDemo() {
+  async function runDemo() {
+    // Quick guard: don't send empty prompts
+    if (!queryInput.trim()) return;
+    // Prevent concurrent requests (re-entrancy protection)
+    if (inFlightRef.current) return;
+    inFlightRef.current = true;
     setIsTyping(true);
     setResult(null);
-    setTimeout(() => {
-      const out = `SELECT id, name, email, COUNT(orders) as orders_count\nFROM users\nWHERE created_at > '2025-01-01'\nGROUP BY id, name, email\nORDER BY orders_count DESC\nLIMIT 20;`;
-      setResult(out);
+    try {
+      const res = await fetch(`${API_BASE}/api/query/demo`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          prompt: queryInput,
+          model: "llama3.2:1b"   // explicitly request llama for demo (optional)
+        })
+      });
+      const data = await res.json();
+
+      let output = data.response || "-- no output --";
+      output = String(output).trim();
+
+      // If server returned a JSON string for some reason, try to extract `query`
+      try {
+        const parsed = JSON.parse(output);
+        if (parsed && parsed.query) output = parsed.query;
+      } catch {}
+
+      // Strip fenced codeblock if present
+      const fence = output.match(/```(?:sql|mongodb|query)?\n([\s\S]*?)\n```/i);
+      if (fence) output = fence[1].trim();
+      else {
+        // Try to extract SQL-like snippet ending with semicolon
+        const sqlMatch = output.match(/((?:SELECT|INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|WITH)[\s\S]{0,2000}?;)/i);
+        if (sqlMatch) output = sqlMatch[1].trim();
+      }
+
+      setResult(output);
+    } catch (err) {
+      setResult("-- error running demo --");
+    } finally {
+      // clear both state and re-entrancy lock
       setIsTyping(false);
-    }, 900 + Math.random() * 600);
+      inFlightRef.current = false;
+    }
   }
 
   return (
@@ -237,15 +278,29 @@ export default function IntroPageV2({ onShowAuth }: { onShowAuth?: () => void })
 
               <div className="flex flex-wrap items-center gap-4 mt-6">
                 <Button size="lg" onClick={()=>onShowAuth?.()} className="bg-gradient-to-r from-sky-500 to-blue-600 text-white px-6 py-4 shadow-2xl transform hover:scale-[1.03] transition">Start chatting <ArrowRight className="w-4 h-4 ml-2"/></Button>
-                <Button variant="outline" size="lg" onClick={runDemo} className="px-5 py-4 text-white/90">Live demo <Play className="w-4 h-4 ml-2"/></Button>
+                <Button variant="outline" size="lg" onClick={runDemo} disabled={isTyping} aria-busy={isTyping} className="px-5 py-4 text-white/90">
+                  Live demo <Play className="w-4 h-4 ml-2"/>
+                </Button>
                 <a className="inline-flex items-center ml-2 text-sm text-white/70 hover:text-white" href="https://github.com/Rifaque/querycraft-frontend"><Github className="w-4 h-4 mr-2"/>Star on GitHub</a>
               </div>
 
               <div className="mt-8">
-                <label className="block text-sm text-white/70 mb-2">Try NL → SQL (mock streaming)</label>
+                <label className="block text-sm text-white/70 mb-2">Try NL → SQL</label>
                 <div className="flex gap-3 items-center">
-                  <input placeholder="e.g. monthly revenue by region" className="flex-1 rounded-xl px-4 py-3 bg-white/6 placeholder-white/50 text-white outline-none border border-white/6" />
-                  <Button onClick={runDemo} className="bg-gradient-to-r from-sky-500 to-blue-600 text-white px-6 py-3">Run</Button>
+                  <input
+                    value={queryInput}
+                    onChange={(e) => setQueryInput(e.target.value)}   // <-- capture user typing
+                    placeholder="e.g. monthly revenue by region"
+                    className="flex-1 rounded-xl px-4 py-3 bg-white/6 placeholder-white/50 text-white outline-none border border-white/6"
+                  />
+                  <Button
+                    onClick={runDemo}
+                    disabled={isTyping}
+                    aria-busy={isTyping}
+                    className="bg-gradient-to-r from-sky-500 to-blue-600 text-white px-6 py-3"
+                  >
+                    Run
+                  </Button>
                 </div>
                 <div className="mt-4">
                   <AnimatePresence>
