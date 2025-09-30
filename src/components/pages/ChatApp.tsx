@@ -144,7 +144,7 @@ export function ChatApp({ userProfile, onLogout }: ChatAppProps) {
   const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
 
   const [isTyping, setIsTyping] = useState(false);
-  const [selectedModel, setSelectedModel] = useState("mistral:7b-instruct");
+  const [selectedModel, setSelectedModel] = useState("qwen:4b");
   const [showDatabaseDialog, setShowDatabaseDialog] = useState(false);
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
 
