@@ -310,10 +310,61 @@ export default function IntroPageV2({ onShowAuth }: { onShowAuth?: () => void })
                 </div>
               </div>
 
-              <div className="mt-6 grid grid-cols-3 gap-4">
-                <div className="p-4 rounded-xl bg-white/4 border border-white/6"><div className="text-2xl font-bold">99ms</div><div className="text-xs text-white/70">avg response</div></div>
-                <div className="p-4 rounded-xl bg-white/4 border border-white/6"><div className="text-2xl font-bold">1k+</div><div className="text-xs text-white/70">queries / day</div></div>
-                <div className="p-4 rounded-xl bg-white/4 border border-white/6"><div className="text-2xl font-bold">Enterprise</div><div className="text-xs text-white/70">grade security</div></div>
+              {/* Targets Section */}
+              <div className="mt-6 grid grid-cols-3 gap-6">
+                {/* Avg Response */}
+                <div className="flex flex-col items-center justify-center p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur">
+                  <svg className="w-20 h-20 text-sky-400" viewBox="0 0 36 36">
+                    <path
+                      className="text-white/20"
+                      stroke="currentColor"
+                      strokeWidth="3"
+                      fill="none"
+                      d="M18 2.0845
+                        a 15.9155 15.9155 0 0 1 0 31.831
+                        a 15.9155 15.9155 0 0 1 0 -31.831"
+                    />
+                    <path
+                      stroke="currentColor"
+                      strokeWidth="3"
+                      strokeLinecap="round"
+                      fill="none"
+                      strokeDasharray="65,100"
+                      className="text-sky-500"
+                      d="M18 2.0845
+                        a 15.9155 15.9155 0 0 1 0 31.831
+                        a 15.9155 15.9155 0 0 1 0 -31.831"
+                    />
+                  </svg>
+                  <div className="mt-3 text-xl font-bold">99ms</div>
+                  <div className="text-xs text-white/70">avg response</div>
+                </div>
+
+                {/* Queries per day */}
+                <div className="flex flex-col items-center justify-center p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur">
+                  <svg className="w-20 h-20 text-green-400" viewBox="0 0 36 36">
+                    <path className="text-white/20" stroke="currentColor" strokeWidth="3" fill="none"
+                      d="M18 2.0845a 15.9155 15.9155 0 0 1 0 31.831a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                    <path stroke="currentColor" strokeWidth="3" strokeLinecap="round" fill="none"
+                      strokeDasharray="75,100" className="text-green-500"
+                      d="M18 2.0845a 15.9155 15.9155 0 0 1 0 31.831a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                  </svg>
+                  <div className="mt-3 text-xl font-bold">1k+</div>
+                  <div className="text-xs text-white/70">queries / day</div>
+                </div>
+
+                {/* Security */}
+                <div className="flex flex-col items-center justify-center p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur">
+                  <svg className="w-20 h-20 text-amber-400" viewBox="0 0 36 36">
+                    <path className="text-white/20" stroke="currentColor" strokeWidth="3" fill="none"
+                      d="M18 2.0845a 15.9155 15.9155 0 0 1 0 31.831a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                    <path stroke="currentColor" strokeWidth="3" strokeLinecap="round" fill="none"
+                      strokeDasharray="90,100" className="text-amber-400"
+                      d="M18 2.0845a 15.9155 15.9155 0 0 1 0 31.831a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                  </svg>
+                  <div className="mt-3 text-xl font-bold">Enterprise</div>
+                  <div className="text-xs text-white/70">grade security</div>
+                </div>
               </div>
             </motion.div>
 
