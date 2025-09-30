@@ -144,7 +144,7 @@ export function ChatApp({ userProfile, onLogout }: ChatAppProps) {
   const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
 
   const [isTyping, setIsTyping] = useState(false);
-  const [selectedModel, setSelectedModel] = useState<string>(userProfile.preferences.defaultModel);
+  const [selectedModel, setSelectedModel] = useState("mistral:7b-instruct");
   const [showDatabaseDialog, setShowDatabaseDialog] = useState(false);
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
 
@@ -152,14 +152,6 @@ export function ChatApp({ userProfile, onLogout }: ChatAppProps) {
   useEffect(() => {
     return () => { isMountedRef.current = false; };
   }, []);
-
-  // Keep selectedModel in sync if the user's default model preference changes
-  useEffect(() => {
-    if (userProfile?.preferences?.defaultModel) {
-      setSelectedModel(userProfile.preferences.defaultModel);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userProfile?.preferences?.defaultModel]);
 
   // Polling helper
   function sleep(ms: number) {
