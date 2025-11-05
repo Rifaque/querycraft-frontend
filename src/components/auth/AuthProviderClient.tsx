@@ -2,6 +2,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import styles from "./AuthProviderClient.module.css";
 
 type Preferences = {
   theme: 'light' | 'dark' | 'system';
@@ -216,8 +217,8 @@ export default function AuthProviderClient({ children }: { children: React.React
   return (
     <AuthContext.Provider value={{ user, loading, login, logout }}>
       {loading ? (
-        <div className="h-screen w-full flex items-center justify-center">
-          <div className="text-sm opacity-80">Validating session…</div>
+        <div className={styles.container}>
+          <div className={styles.text}>Validating session…</div>
         </div>
       ) : (
         children

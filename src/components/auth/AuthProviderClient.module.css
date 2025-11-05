@@ -1,0 +1,12 @@
+.container {
+  height: 100vh; /* h-screen */
+  width: 100%; /* w-full */
+  display: flex; /* flex */
+  align-items: center; /* items-center */
+  justify-content: center; /* justify-center */
+}
+
+.text {
+  font-size: 0.875rem; /* text-sm */
+  opacity: 0.8; /* opacity-80 */
+}

@@ -5,6 +5,7 @@ import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { ChatSidebar } from "./ChatSidebar";
+import styles from "./MobileSidebarTrigger.module.css";
 
 // Define structures - repeated for component self-containment
 interface Message {
@@ -54,15 +55,17 @@ export function MobileSidebarTrigger({
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetTrigger asChild>
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="text-muted-foreground"
+        <Button
+          variant="ghost"
+          size="icon"
+          className={styles.triggerBtn}
+          aria-label="Open chat sidebar"
         >
-          <Menu className="w-5 h-5" />
+          <Menu className={styles.icon} />
         </Button>
       </SheetTrigger>
-      <SheetContent side="left" className="p-0 w-80">
+
+      <SheetContent side="left" className={styles.sheetContent}>
         <ChatSidebar
           chatSessions={chatSessions}
           currentSessionId={currentSessionId}

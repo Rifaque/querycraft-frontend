@@ -5,6 +5,7 @@ import { IntroPage } from "@/components/pages/IntroPage";
 import { AuthPage } from "@/components/pages/AuthPage";
 import { ChatApp } from "@/components/pages/ChatApp";
 import { toast } from "sonner";
+import styles from "./Home.module.css";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE;
 
@@ -50,11 +51,9 @@ export default function Home() {
         const res = await fetch(`${API_BASE}/api/auth/me`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        console.log("response:", res);
 
         if (res.ok) {
           const data = await res.json();
-          console.log(data);
           setUserProfile(prev => ({
             ...prev,
             name: data.name ?? prev.name,
@@ -146,7 +145,7 @@ export default function Home() {
     toast.success("Profile updated successfully");
   };
 
-  if (loading) return <div className="flex h-screen items-center justify-center">Loading...</div>;
+  if (loading) return <div className={styles.loading}>Loading...</div>;
 
   // --- Render Logic ---
   switch (currentView) {

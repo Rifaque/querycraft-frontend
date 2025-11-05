@@ -18,20 +18,11 @@ import { Canvas } from "@react-three/fiber";
 import type { GLTF } from "three-stdlib";
 import { Float, ContactShadows, useGLTF } from "@react-three/drei";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || '';
+import styles from "./IntroPageV2.module.css";
 
-// ------------------------------------------------------------------
-// QueryCraft — EPIC v2
-// - This file is intentionally modular (multiple small components in one file)
-// - Features added: Lottie hero (placeholder), streaming SQL mock, testimonial carousel,
-//   sticky nav, scroll reveal animations, A/B-ready signup form, accessibility notes.
-//
-// Recommended installs:
-// npm i framer-motion three @react-three/fiber @react-three/drei react-lottie-player lucide-react
-// (plus tailwind, shadcn/ui or your component system)
-// ------------------------------------------------------------------
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "";
 
-// -------------------------- Utilities ---------------------------------
+// ------------------------ Utilities ---------------------------------
 function useTypingStream(text: string, ms = 30) {
   const [output, setOutput] = useState("");
   useEffect(() => {
@@ -100,7 +91,7 @@ function ParticlesBackground() {
       window.removeEventListener("resize", resize);
     };
   }, []);
-  return <canvas ref={ref} className="absolute inset-0 w-full h-full pointer-events-none" />;
+  return <canvas ref={ref} className={styles.particlesCanvas} />;
 }
 
 // ------------------------ 3D Model & fallback --------------------------
@@ -134,10 +125,9 @@ function QueryCraftModel({ modelUrl }: { modelUrl?: string }) {
   }
 }
 
-
 function Hero3D({ modelUrl }: { modelUrl?: string }) {
   return (
-    <div className="w-full h-96 md:h-[34rem] rounded-3xl overflow-hidden border border-white/6 bg-gradient-to-br from-sky-900/10 to-blue-900/6 backdrop-blur">
+    <div className={styles.hero3dWrapper}>
       <Canvas camera={{ position: [0, 0, 8], fov: 42 }}>
         <ambientLight intensity={0.6} />
         <directionalLight intensity={0.95} position={[5, 6, 5]} />
@@ -154,60 +144,31 @@ function Hero3D({ modelUrl }: { modelUrl?: string }) {
 // -------------------------- Feature Card --------------------------------
 function FeatureCard({ icon, title, desc }: { icon: React.ReactNode; title: string; desc: string }) {
   return (
-    <motion.div whileHover={{ scale: 1.03, y: -6 }} className="p-6 rounded-2xl bg-white/6 backdrop-blur border border-white/6 shadow-md">
-      <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-sky-500 to-blue-600 flex items-center justify-center text-white mb-4">
-        {icon}
-      </div>
-      <h4 className="text-lg font-semibold mb-2">{title}</h4>
-      <p className="text-sm text-white/80">{desc}</p>
+    <motion.div whileHover={{ scale: 1.03, y: -6 }} className={styles.featureCard}>
+      <div className={styles.featureIcon}>{icon}</div>
+      <h4 className={styles.featureTitle}>{title}</h4>
+      <p className={styles.featureDesc}>{desc}</p>
     </motion.div>
   );
 }
 
-// -------------------------- Testimonials --------------------------------
-// function Testimonials() {
-//   const slides = [
-//     { quote: "QueryCraft turned our analysts into data ninjas — instant insights.", who: "Maya, Data Lead @ Nova" },
-//     { quote: "The NL→SQL demo sold our CEO in 5 minutes. Game changer.", who: "Arun, CTO @ ScaleOps" },
-//     { quote: "Safe, fast, and delightful — we migrated our dashboards to QueryCraft.", who: "Leah, BI Manager" },
-//   ];
-//   const [i, setI] = useState(0);
-//   useEffect(() => {
-//     const t = setInterval(() => setI((s) => (s + 1) % slides.length), 4200);
-//     return () => clearInterval(t);
-//   }, [slides.length]);
-//   return (
-//     <div className="p-6 rounded-2xl bg-white/6 border border-white/6">
-//       <div className="flex items-center gap-4">
-//         <div className="text-3xl"><Star className="w-6 h-6 text-amber-400" /></div>
-//         <div>
-//           <div className="text-sm text-white/80 italic">&quot;{slides[i].quote}&quot;</div>
-//           <div className="text-xs text-white/60 mt-2">— {slides[i].who}</div>
-//         </div>
-//       </div>
-//     </div>
-//   );
-// }
-
 // -------------------------- Main Page ----------------------------------
 export default function IntroPageV2({ onShowAuth }: { onShowAuth?: () => void }) {
   const features = [
-    { icon: <Database className="w-6 h-6" />, title: "Smart DB queries", description: "Precise, optimized SQL with safety checks." },
-    { icon: <MessageSquare className="w-6 h-6" />, title: "Conversational UI", description: "Save chats, share workspaces, and collaborate." },
-    { icon: <Zap className="w-6 h-6" />, title: "Real-time previews", description: "Streaming SQL previews for faster iteration." },
-    { icon: <Shield className="w-6 h-6" />, title: "Enterprise-ready", description: "Audit logs, RBAC and row-level security." },
+    { icon: <Database className={styles.iconSize} />, title: "Smart DB queries", description: "Precise, optimized SQL with safety checks." },
+    { icon: <MessageSquare className={styles.iconSize} />, title: "Conversational UI", description: "Save chats, share workspaces, and collaborate." },
+    { icon: <Zap className={styles.iconSize} />, title: "Real-time previews", description: "Streaming SQL previews for faster iteration." },
+    { icon: <Shield className={styles.iconSize} />, title: "Enterprise-ready", description: "Audit logs, RBAC and row-level security." },
   ];
 
-  const [queryInput, setQueryInput] = useState(""); 
+  const [queryInput, setQueryInput] = useState("");
   const [result, setResult] = useState<string | null>(null);
   const [isTyping, setIsTyping] = useState(false);
   const typed = useTypingStream(result || "", 18);
   const inFlightRef = useRef(false);
 
   async function runDemo() {
-    // Quick guard: don't send empty prompts
     if (!queryInput.trim()) return;
-    // Prevent concurrent requests (re-entrancy protection)
     if (inFlightRef.current) return;
     inFlightRef.current = true;
     setIsTyping(true);
@@ -218,25 +179,22 @@ export default function IntroPageV2({ onShowAuth }: { onShowAuth?: () => void })
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           prompt: queryInput,
-          model: "llama3.2:1b"   // explicitly request llama for demo (optional)
-        })
+          model: "llama3.2:1b",
+        }),
       });
       const data = await res.json();
 
       let output = data.response || "-- no output --";
       output = String(output).trim();
 
-      // If server returned a JSON string for some reason, try to extract `query`
       try {
         const parsed = JSON.parse(output);
         if (parsed && parsed.query) output = parsed.query;
       } catch {}
 
-      // Strip fenced codeblock if present
       const fence = output.match(/```(?:sql|mongodb|query)?\n([\s\S]*?)\n```/i);
       if (fence) output = fence[1].trim();
       else {
-        // Try to extract SQL-like snippet ending with semicolon
         const sqlMatch = output.match(/((?:SELECT|INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|WITH)[\s\S]{0,2000}?;)/i);
         if (sqlMatch) output = sqlMatch[1].trim();
       }
@@ -245,151 +203,123 @@ export default function IntroPageV2({ onShowAuth }: { onShowAuth?: () => void })
     } catch (err) {
       setResult("-- error running demo --");
     } finally {
-      // clear both state and re-entrancy lock
       setIsTyping(false);
       inFlightRef.current = false;
     }
   }
 
   return (
-    <div className="relative min-h-screen flex flex-col bg-gradient-to-b from-[#071025] to-[#03040a] text-white overflow-hidden">
-      <div className="absolute inset-0 z-0"><ParticlesBackground /></div>
-      <div className="pointer-events-none absolute -left-72 -top-48 w-[60rem] h-[60rem] rounded-full bg-gradient-to-br from-sky-500/6 via-blue-600/4 to-transparent blur-3xl opacity-60" />
+    <div className={styles.pageRoot}>
+      <div className={styles.absoluteBackdrop}><ParticlesBackground /></div>
+      <div className={styles.gradientBlob} />
 
-      {/* Sticky Nav */}
-      <nav className="relative z-30 w-full px-6 py-4 flex items-center justify-between backdrop-blur bg-black/20 border-b border-white/6">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-sky-500 to-blue-600 flex items-center justify-center shadow-xl"><Database className="w-6 h-6 text-white" /></div>
-          <div className="leading-none"><div className="text-xl font-bold">QueryCraft</div><div className="text-xs text-white/60 -mt-1">AI DB assistant</div></div>
+      <nav className={styles.stickyNav}>
+        <div className={styles.brandRow}>
+          <div className={styles.brandIcon}><Database className={styles.dbIcon} /></div>
+          <div className={styles.brandText}>
+            <div className={styles.brandTitle}>QueryCraft</div>
+            <div className={styles.brandSubtitle}>AI DB assistant</div>
+          </div>
         </div>
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" onClick={()=>onShowAuth?.()} className="text-white/80">Sign in</Button>
-          <Button onClick={()=>onShowAuth?.()} className="bg-gradient-to-r from-sky-500 to-blue-600 text-white">Get started <ArrowRight className="w-4 h-4 ml-2" /></Button>
+
+        <div className={styles.navActions}>
+          <Button variant="ghost" onClick={() => onShowAuth?.()} className={styles.signInBtn}>Sign in</Button>
+          <Button onClick={() => onShowAuth?.()} className={styles.getStartedBtn}>Get started <ArrowRight className={styles.arrowIcon} /></Button>
         </div>
       </nav>
 
-      <main className="relative z-10 flex-1 flex items-center justify-center px-6 py-12">
-        <div className="max-w-7xl w-full mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          <div className="lg:col-span-6 space-y-6">
+      <main className={styles.main}>
+        <div className={styles.container}>
+          <div className={styles.leftCol}>
             <motion.div initial={{ opacity: 0, x: -30 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.8 }}>
-              <div className="inline-flex items-center px-3 py-1 rounded-full bg-white/6 mb-4"><Sparkles className="w-4 h-4 mr-2 text-white/90"/><span className="text-sm text-white/90">AI · SQL · Instant Insights</span></div>
-              <h1 className="text-5xl md:text-6xl font-extrabold leading-tight">Data that speaks your language — <br/><span className="bg-clip-text text-transparent bg-gradient-to-r from-sky-400 to-blue-400">conversational analytics</span></h1>
-              <p className="text-lg text-white/80 mt-4 max-w-xl">QueryCraft turns plain English into safe, optimized SQL with real-time previews, collaboration, and enterprise controls. Designed to make analysts faster and happier.</p>
+              <div className={styles.pill}><Sparkles className={styles.sparkIcon} /><span>AI · SQL · Instant Insights</span></div>
 
-              <div className="flex flex-wrap items-center gap-4 mt-6">
-                <Button size="lg" onClick={()=>onShowAuth?.()} className="bg-gradient-to-r from-sky-500 to-blue-600 text-white px-6 py-4 shadow-2xl transform hover:scale-[1.03] transition">Start chatting <ArrowRight className="w-4 h-4 ml-2"/></Button>
-                <Button variant="outline" size="lg" onClick={runDemo} disabled={isTyping} aria-busy={isTyping} className="px-5 py-4 text-white/90">
-                  Live demo <Play className="w-4 h-4 ml-2"/>
-                </Button>
-                <a className="inline-flex items-center ml-2 text-sm text-white/70 hover:text-white" href="https://github.com/Rifaque/querycraft-frontend"><Github className="w-4 h-4 mr-2"/>Star on GitHub</a>
+              <h1 className={styles.heroTitle}>
+                Data that speaks your language — <br />
+                <span className={styles.gradientText}>conversational analytics</span>
+              </h1>
+
+              <p className={styles.heroSubtitle}>QueryCraft turns plain English into safe, optimized SQL with real-time previews, collaboration, and enterprise controls. Designed to make analysts faster and happier.</p>
+
+              <div className={styles.heroActions}>
+                <Button size="lg" onClick={() => onShowAuth?.()} className={styles.primaryAction}>Start chatting <ArrowRight className={styles.arrowIcon} /></Button>
+                <Button variant="outline" size="lg" onClick={runDemo} disabled={isTyping} aria-busy={isTyping} className={styles.demoAction}>Live demo <Play className={styles.playIcon} /></Button>
+                <a className={styles.githubLink} href="https://github.com/Rifaque/querycraft-frontend" target="_blank" rel="noopener noreferrer"><Github className={styles.githubIcon} />Star on GitHub</a>
               </div>
 
-              <div className="mt-8">
-                <label className="block text-sm text-white/70 mb-2">Try NL → SQL</label>
-                <div className="flex gap-3 items-center">
+              <div className={styles.demoBox}>
+                <label className={styles.inputLabel}>Try NL → SQL</label>
+                <div className={styles.inputRow}>
                   <input
                     value={queryInput}
-                    onChange={(e) => setQueryInput(e.target.value)}   // <-- capture user typing
+                    onChange={(e) => setQueryInput(e.target.value)}
                     placeholder="e.g. monthly revenue by region"
-                    className="flex-1 rounded-xl px-4 py-3 bg-white/6 placeholder-white/50 text-white outline-none border border-white/6"
+                    className={styles.input}
                   />
-                  <Button
-                    onClick={runDemo}
-                    disabled={isTyping}
-                    aria-busy={isTyping}
-                    className="bg-gradient-to-r from-sky-500 to-blue-600 text-white px-6 py-3"
-                  >
-                    Run
-                  </Button>
+                  <Button onClick={runDemo} disabled={isTyping} aria-busy={isTyping} className={styles.runBtn}>Run</Button>
                 </div>
-                <div className="mt-4">
+
+                <div className={styles.resultArea}>
                   <AnimatePresence>
-                    {isTyping && <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="rounded-lg p-4 bg-black/70 border border-white/6 text-sm text-sky-200">Generating SQL...</motion.div>}
-                    {result && <motion.pre initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="mt-2 rounded-lg p-4 bg-black/80 text-sm text-sky-200 overflow-auto border border-white/6">{typed}</motion.pre>}
+                    {isTyping && <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className={styles.generating}>Generating SQL...</motion.div>}
+                    {result && <motion.pre initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className={styles.resultPre}>{typed}</motion.pre>}
                   </AnimatePresence>
                 </div>
               </div>
 
-              {/* Targets Section */}
-              <div className="mt-6 grid grid-cols-3 gap-6">
-                {/* Avg Response */}
-                <div className="flex flex-col items-center justify-center p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur">
-                  <svg className="w-20 h-20 text-sky-400" viewBox="0 0 36 36">
-                    <path
-                      className="text-white/20"
-                      stroke="currentColor"
-                      strokeWidth="3"
-                      fill="none"
-                      d="M18 2.0845
-                        a 15.9155 15.9155 0 0 1 0 31.831
-                        a 15.9155 15.9155 0 0 1 0 -31.831"
-                    />
-                    <path
-                      stroke="currentColor"
-                      strokeWidth="3"
-                      strokeLinecap="round"
-                      fill="none"
-                      strokeDasharray="65,100"
-                      className="text-sky-500"
-                      d="M18 2.0845
-                        a 15.9155 15.9155 0 0 1 0 31.831
-                        a 15.9155 15.9155 0 0 1 0 -31.831"
-                    />
+              <div className={styles.targetsGrid}>
+                <div className={styles.targetCard}>
+                  <svg className={styles.targetSvg} viewBox="0 0 36 36">
+                    <path stroke="currentColor" strokeWidth="3" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                    <path stroke="currentColor" strokeWidth="3" strokeLinecap="round" fill="none" strokeDasharray="65,100" className={styles.targetDash} d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
                   </svg>
-                  <div className="mt-3 text-xl font-bold">99ms</div>
-                  <div className="text-xs text-white/70">avg response</div>
+                  <div className={styles.targetValue}>99ms</div>
+                  <div className={styles.targetLabel}>avg response</div>
                 </div>
 
-                {/* Queries per day */}
-                <div className="flex flex-col items-center justify-center p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur">
-                  <svg className="w-20 h-20 text-green-400" viewBox="0 0 36 36">
-                    <path className="text-white/20" stroke="currentColor" strokeWidth="3" fill="none"
-                      d="M18 2.0845a 15.9155 15.9155 0 0 1 0 31.831a 15.9155 15.9155 0 0 1 0 -31.831"/>
-                    <path stroke="currentColor" strokeWidth="3" strokeLinecap="round" fill="none"
-                      strokeDasharray="75,100" className="text-green-500"
-                      d="M18 2.0845a 15.9155 15.9155 0 0 1 0 31.831a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                <div className={styles.targetCard}>
+                  <svg className={styles.targetSvg} viewBox="0 0 36 36">
+                    <path stroke="currentColor" strokeWidth="3" fill="none" d="M18 2.0845a 15.9155 15.9155 0 0 1 0 31.831a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                    <path stroke="currentColor" strokeWidth="3" strokeLinecap="round" fill="none" strokeDasharray="75,100" className={styles.targetDashGreen} d="M18 2.0845a 15.9155 15.9155 0 0 1 0 31.831a 15.9155 15.9155 0 0 1 0 -31.831"/>
                   </svg>
-                  <div className="mt-3 text-xl font-bold">1k+</div>
-                  <div className="text-xs text-white/70">queries / day</div>
+                  <div className={styles.targetValue}>1k+</div>
+                  <div className={styles.targetLabel}>queries / day</div>
                 </div>
 
-                {/* Security */}
-                <div className="flex flex-col items-center justify-center p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur">
-                  <svg className="w-20 h-20 text-amber-400" viewBox="0 0 36 36">
-                    <path className="text-white/20" stroke="currentColor" strokeWidth="3" fill="none"
-                      d="M18 2.0845a 15.9155 15.9155 0 0 1 0 31.831a 15.9155 15.9155 0 0 1 0 -31.831"/>
-                    <path stroke="currentColor" strokeWidth="3" strokeLinecap="round" fill="none"
-                      strokeDasharray="90,100" className="text-amber-400"
-                      d="M18 2.0845a 15.9155 15.9155 0 0 1 0 31.831a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                <div className={styles.targetCard}>
+                  <svg className={styles.targetSvg} viewBox="0 0 36 36">
+                    <path stroke="currentColor" strokeWidth="3" fill="none" d="M18 2.0845a 15.9155 15.9155 0 0 1 0 31.831a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                    <path stroke="currentColor" strokeWidth="3" strokeLinecap="round" fill="none" strokeDasharray="90,100" className={styles.targetDashAmber} d="M18 2.0845a 15.9155 15.9155 0 0 1 0 31.831a 15.9155 15.9155 0 0 1 0 -31.831"/>
                   </svg>
-                  <div className="mt-3 text-xl font-bold">Enterprise</div>
-                  <div className="text-xs text-white/70">grade security</div>
+                  <div className={styles.targetValue}>Enterprise</div>
+                  <div className={styles.targetLabel}>grade security</div>
                 </div>
               </div>
             </motion.div>
-
-            {/* <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.2 }}>
-              <Testimonials />
-            </motion.div> */}
-
           </div>
 
-          <div className="lg:col-span-6 space-y-6">
+          <div className={styles.rightCol}>
             <motion.div initial={{ opacity: 0, x: 30 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.8 }}>
               <Hero3D />
             </motion.div>
 
-            <motion.div className="grid md:grid-cols-2 gap-4" initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} transition={{ delay: 0.3 }}>
+            <motion.div className={styles.featuresGrid} initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} transition={{ delay: 0.3 }}>
               {features.map((f) => <FeatureCard key={f.title} icon={f.icon} title={f.title} desc={f.description} />)}
             </motion.div>
           </div>
         </div>
       </main>
 
-      <footer className="relative z-30 w-full px-6 py-8 border-t border-white/6 bg-gradient-to-t from-black/20 to-transparent">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-3"><div className="w-10 h-10 rounded-lg bg-gradient-to-br from-sky-500 to-blue-600 flex items-center justify-center"><Database className="w-5 h-5 text-white" /></div><div><div className="text-sm">QueryCraft</div><div className="text-xs text-white/60">© 2025 QueryCraft</div></div></div>
-          <div className="text-sm text-white/60">Built by <a href="https://hubzero.in/" className="no-underline" target="_blank" rel="noopener noreferrer">Hub Zero</a> · Designed for devs & analysts</div>
+      <footer className={styles.footer}>
+        <div className={styles.footerInner}>
+          <div className={styles.footerBrand}>
+            <div className={styles.footerIcon}><Database className={styles.dbIconSmall} /></div>
+            <div>
+              <div className={styles.footerTitle}>QueryCraft</div>
+              <div className={styles.footerSub}>© 2025 QueryCraft</div>
+            </div>
+          </div>
+          <div className={styles.footerNote}>Built by <a href="https://hubzero.in/" className={styles.link} target="_blank" rel="noopener noreferrer">Hub Zero</a> · Designed for devs & analysts</div>
         </div>
       </footer>
     </div>

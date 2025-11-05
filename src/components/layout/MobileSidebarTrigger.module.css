@@ -1,0 +1,20 @@
+/* Container styles applied to the trigger button */
+.triggerBtn {
+  color: rgba(148,163,184,0.9); /* muted-foreground-ish */
+  background: transparent;
+  padding: 0; /* keep icon sizing consistent with size="icon" */
+}
+
+/* Icon sizing (matches w-5 h-5) */
+.icon {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+/* SheetContent replacement for "p-0 w-80" */
+.sheetContent {
+  padding: 0;            /* p-0 */
+  width: 20rem;         /* w-80 (20rem) */
+  max-width: 100%;
+  box-sizing: border-box;
+}

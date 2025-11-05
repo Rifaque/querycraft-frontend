@@ -1,0 +1,128 @@
+.dialogContent {
+  max-width: 700px; /* sm:max-w-[700px] */
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* header */
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+}
+.icon {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+.description {
+  margin-top: 0.25rem;
+  color: rgba(148,163,184,0.9);
+  font-size: 0.95rem;
+}
+
+/* tabs root */
+.tabsRoot {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.tabsList {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.25rem;
+}
+.tabTrigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  border-radius: 8px;
+}
+.tabIcon {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* content scroll area */
+.tabsContent {
+  flex: 1;
+  margin-top: 1rem;
+  min-height: 0;
+}
+.scroll {
+  height: 100%;
+  padding-right: 1rem;
+}
+
+/* layout helpers */
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* card content */
+.cardContent {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+/* small utility row */
+.rowBetween {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* select */
+.select {
+  background: transparent;
+  border: 1px solid rgba(148,163,184,0.12);
+  padding: 0.35rem 0.5rem;
+  border-radius: 6px;
+}
+
+/* storage grid */
+.storageGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  text-align: center;
+}
+.statValue {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+.statLabel {
+  font-size: 0.875rem;
+  color: rgba(148,163,184,0.9);
+}
+
+/* danger area */
+.dangerTitle {
+  color: #ef4444; /* destructive */
+}
+
+/* full width button */
+.fullWidthBtn {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* alert icon */
+.alertIcon {
+  width: 1rem;
+  height: 1rem;
+  margin-right: 0.5rem;
+}

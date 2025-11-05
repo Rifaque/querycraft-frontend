@@ -1,12 +1,13 @@
 'use client';
 
 import { useState } from "react";
-import { Upload, FileText, Database } from "lucide-react";
+import { Upload, FileText, Database as DatabaseIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
+import styles from "./DatabaseImportDialog.module.css";
 
 interface DatabaseImportDialogProps {
   open: boolean;
@@ -30,82 +31,84 @@ export function DatabaseImportDialog({ open, onOpenChange, onImport }: DatabaseI
     } else {
       onImport(null, connectionString);
     }
-    // Reset state and close dialog
     onOpenChange(false);
     setSelectedFile(null);
     setConnectionString("");
   };
-  
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className={styles.dialogContent}>
         <DialogHeader>
-          <DialogTitle className="flex items-center space-x-2">
-            <Database className="w-5 h-5" />
+          <DialogTitle className={styles.dialogTitle}>
+            <DatabaseIcon className={styles.icon} />
             <span>Import Database</span>
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className={styles.dialogDescription}>
             Upload a file or connect to an existing database.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6 py-4">
-          <div className="grid grid-cols-2 gap-3">
-            <Card 
-              className={`cursor-pointer transition-all ${importMethod === 'file' ? 'ring-2 ring-primary' : 'hover:bg-accent'}`}
+        <div className={styles.content}>
+          <div className={styles.methodGrid}>
+            <Card
+              className={`${styles.card} ${importMethod === 'file' ? styles.selected : styles.cardHover}`}
               onClick={() => setImportMethod('file')}
             >
-              <CardContent className="flex flex-col items-center p-4">
-                <FileText className="w-8 h-8 text-muted-foreground mb-2" />
-                <span className="text-sm font-medium">Upload File</span>
-                <span className="text-xs text-muted-foreground text-center">SQL, CSV, JSON</span>
+              <CardContent className={styles.cardContent}>
+                <FileText className={styles.cardIcon} />
+                <span className={styles.cardTitle}>Upload File</span>
+                <span className={styles.cardSubtitle}>SQL, CSV, JSON</span>
               </CardContent>
             </Card>
-            
-            <Card 
-              className={`cursor-pointer transition-all ${importMethod === 'connection' ? 'ring-2 ring-primary' : 'hover:bg-accent'}`}
+
+            <Card
+              className={`${styles.card} ${importMethod === 'connection' ? styles.selected : styles.cardHover}`}
               onClick={() => setImportMethod('connection')}
             >
-              <CardContent className="flex flex-col items-center p-4">
-                <Database className="w-8 h-8 text-muted-foreground mb-2" />
-                <span className="text-sm font-medium">Connect DB</span>
-                <span className="text-xs text-muted-foreground text-center">Connection String</span>
+              <CardContent className={styles.cardContent}>
+                <DatabaseIcon className={styles.cardIcon} />
+                <span className={styles.cardTitle}>Connect DB</span>
+                <span className={styles.cardSubtitle}>Connection String</span>
               </CardContent>
             </Card>
           </div>
 
           {importMethod === 'file' && (
-            <div className="space-y-2">
-              <Label htmlFor="database-file">Select Database File</Label>
-              <Input id="database-file" type="file" onChange={handleFileChange} />
+            <div className={styles.formRow}>
+              <Label htmlFor="database-file" className={styles.label}>Select Database File</Label>
+              <Input id="database-file" type="file" onChange={handleFileChange} className={styles.fileInput} />
+              {selectedFile && <div className={styles.fileName}>{selectedFile.name}</div>}
             </div>
           )}
 
           {importMethod === 'connection' && (
-            <div className="space-y-2">
-              <Label htmlFor="connection-string">Database Connection String</Label>
+            <div className={styles.formRow}>
+              <Label htmlFor="connection-string" className={styles.label}>Database Connection String</Label>
               <Input
                 id="connection-string"
                 type="text"
                 placeholder="postgresql://user:pass@host:port/db"
                 value={connectionString}
                 onChange={(e) => setConnectionString(e.target.value)}
+                className={styles.textInput}
               />
             </div>
           )}
 
-          <div className="flex justify-end space-x-2 pt-4">
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <div className={styles.actions}>
+            <Button variant="outline" onClick={() => onOpenChange(false)} className={styles.cancelBtn}>
               Cancel
             </Button>
-            <Button 
+            <Button
               onClick={handleImportClick}
               disabled={
-                (importMethod === 'file' && !selectedFile) || 
+                (importMethod === 'file' && !selectedFile) ||
                 (importMethod === 'connection' && !connectionString.trim())
               }
+              className={styles.importBtn}
             >
-              <Upload className="w-4 h-4 mr-2" />
+              <Upload className={styles.uploadIcon} />
               Import
             </Button>
           </div>

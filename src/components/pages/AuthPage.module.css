@@ -1,0 +1,205 @@
+/* Page root */
+.pageRoot {
+  min-height: 100vh;
+  background: var(--background, #f8fafc);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Nav */
+.nav {
+  width: 100%;
+  padding: 1rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(6px);
+  background: rgba(255,255,255,0.6);
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+}
+.navInner {
+  width: 100%;
+  max-width: 1120px;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.backBtn {
+  margin-right: 0.5rem;
+}
+.iconSmall {
+  width: 1rem;
+  height: 1rem;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-left: auto;
+}
+.brandIcon {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 8px;
+  background: linear-gradient(90deg, #06b6d4, #3b82f6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.dbIcon {
+  width: 1.25rem;
+  height: 1.25rem;
+  color: white;
+}
+.brandTitle {
+  font-weight: 700;
+  background: linear-gradient(90deg, #06b6d4, #3b82f6);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  font-size: 1.125rem;
+}
+
+/* Main */
+.main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+.card {
+  position: relative;
+  width: 100%;
+  max-width: 80rem;
+  height: 38rem;
+  background: white;
+  border-radius: 24px;
+  box-shadow: 0 20px 60px rgba(2,6,23,0.35);
+  overflow: hidden;
+}
+
+/* panels */
+.panel {
+  position: absolute;
+  inset-y: 0;
+  width: 50%;
+  top: 0;
+  bottom: 0;
+}
+.panelTop { z-index: 10; left: 50%; transform: translateX(-50%); }
+.panel2 { z-index: 8; left: 50%; transform: translateX(-50%); }
+.panel3 { z-index: 6; left: 50%; transform: translateX(-50%); }
+.panel4 { z-index: 4; left: 50%; transform: translateX(-50%); }
+
+/* side text */
+.sideText {
+  position: absolute;
+  inset-y: 0;
+  width: 50%;
+  right: 50%;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+.sideTextInner {
+  padding: 3rem;
+  text-align: center;
+  pointer-events: auto;
+  color: #ffffff;
+}
+.sideHeading {
+  font-size: 2.25rem;
+  font-weight: 800;
+  margin-bottom: 1rem;
+}
+.sideLead {
+  font-size: 1.125rem;
+  opacity: 0.95;
+  margin-bottom: 1.5rem;
+}
+.toggleBtn {
+  border-radius: 9999px;
+  padding: 0.75rem 2.5rem;
+  border: 2px solid rgba(255,255,255,0.9);
+  color: white;
+}
+
+/* form panels */
+.formPanel {
+  position: absolute;
+  inset-y: 0;
+  width: 100%;
+  max-width: 50%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 2rem;
+  transition: opacity 0.35s ease, pointer-events 0.35s ease;
+}
+.formPanel.visible { opacity: 1; pointer-events: auto; }
+.formPanel.hidden { opacity: 0; pointer-events: none; }
+.formPanel.rightSide { right: 0; left: auto; }
+.formPanel:not(.rightSide) { left: 0; right: auto; }
+
+/* titles & error */
+.formTitle {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 1.25rem;
+  color: #111827;
+}
+.errorBox {
+  margin-bottom: 1rem;
+  padding: 0.5rem 0.75rem;
+  background: rgba(220, 38, 38, 0.06);
+  border: 1px solid rgba(220, 38, 38, 0.12);
+  color: #b91c1c;
+  border-radius: 8px;
+}
+
+/* form stack */
+.formStack {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-width: 28rem;
+}
+.input {
+  width: 100%;
+  padding: 1rem;
+  border-radius: 12px;
+}
+
+/* forgot link */
+.forgotWrap { text-align: center; }
+.forgotLink { color: #6b21a8; font-size: 0.875rem; }
+
+/* buttons */
+.primaryBtn {
+  width: 100%;
+  background: linear-gradient(90deg, #7c3aed, #6d28d9);
+  color: white;
+  padding: 1rem;
+  border-radius: 9999px;
+  font-weight: 700;
+  font-size: 1rem;
+  box-shadow: 0 18px 50px rgba(99,102,241,0.12);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.primaryBtn:disabled { opacity: 0.7; cursor: not-allowed; }
+
+/* responsiveness */
+.hiddenMd { display: none; }
+@media (min-width: 768px) {
+  .hiddenMd { display: block; }
+  .formPanel { max-width: 50%; }
+  .card { height: 38rem; }
+}
+@media (max-width: 767px) {
+  .card { height: auto; border-radius: 16px; padding: 1rem; }
+  .sideText { display: none; }
+  .formPanel { position: relative; width: 100%; max-width: 100%; padding: 1rem; }
+}

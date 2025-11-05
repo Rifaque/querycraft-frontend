@@ -1,20 +1,21 @@
-import React from 'react';
+import React from "react";
+import styles from "./Header.module.css";
 
 export const Header = () => {
   return (
-    <header className="flex h-16 shrink-0 items-center justify-between border-b border-gray-700 px-6">
+    <header className={styles.header}>
       {/* Left side: App Title & Model Selector */}
-      <div className="flex items-center gap-4">
-        <h1 className="text-xl font-bold">
-          Query<span className="text-electric-blue">Craft</span>
+      <div className={styles.left}>
+        <h1 className={styles.title}>
+          Query<span className={styles.highlight}>Craft</span>
         </h1>
-        <div className="hidden sm:flex items-center gap-2 cursor-pointer rounded-lg bg-gray-800 px-3 py-1.5 text-sm font-medium text-gray-300 hover:bg-gray-700">
+        <div className={styles.modelSelector}>
           <span>Mistral AI</span>
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 20 20"
             fill="currentColor"
-            className="h-5 w-5"
+            className={styles.icon}
           >
             <path
               fillRule="evenodd"
@@ -26,10 +27,9 @@ export const Header = () => {
       </div>
 
       {/* Right side: Action Icons */}
-      <div className="flex items-center gap-4">
-        {/* Placeholder icons */}
-        <div className="h-8 w-8 rounded-full bg-gray-700"></div>
-        <div className="h-8 w-8 rounded-full bg-electric-blue"></div>
+      <div className={styles.right}>
+        <div className={styles.grayCircle}></div>
+        <div className={styles.blueCircle}></div>
       </div>
     </header>
   );

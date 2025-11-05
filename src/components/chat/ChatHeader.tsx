@@ -19,7 +19,8 @@ export function ChatHeader({ selectedModel, onModelChange, onDatabaseImport, onS
       <div className={styles.container}>
         <div className={styles.left}>
           {sidebarTrigger && (
-            <div className="lg:hidden">
+            <div className={styles.mobileOnly}>
+
               {sidebarTrigger}
             </div>
           )}

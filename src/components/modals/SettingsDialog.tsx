@@ -1,17 +1,27 @@
 'use client';
 
-import React, { useState, useEffect } from "react"; // 1. Added 'React' import
+import React, { useState, useEffect } from "react";
 import { Settings, User, MessageSquare, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-// import { Separator } from "@/components/ui/separator";
-// import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger
+} from "@/components/ui/alert-dialog";
+
+import styles from "./SettingsDialog.module.css";
 
 // Define structures - repeated for component self-containment
 interface Message {
@@ -29,7 +39,7 @@ interface ChatSession {
   lastActive: string;
 }
 
-type ThemePreference = 'light' | 'dark' | 'system'; // 2. Created a specific type for theme
+type ThemePreference = 'light' | 'dark' | 'system';
 
 interface UserProfile {
   name: string;
@@ -61,9 +71,8 @@ export function SettingsDialog({
   onClearAllHistory
 }: SettingsDialogProps) {
   const [profile, setProfile] = useState<UserProfile>(userProfile);
-  const user = localStorage.getItem("qc_user");
+  const user = typeof window !== 'undefined' ? localStorage.getItem("qc_user") : null;
 
-  // Sync state when dialog opens or userProfile prop changes
   useEffect(() => {
     setProfile(userProfile);
   }, [userProfile]);
@@ -79,7 +88,6 @@ export function SettingsDialog({
     }
   };
 
-  // 3. Extracted theme change handler for clarity and type safety
   const handleThemeChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const newTheme = event.target.value as ThemePreference;
     setProfile(p => ({
@@ -90,55 +98,66 @@ export function SettingsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[700px] max-h-[90vh] flex flex-col">
+      <DialogContent className={styles.dialogContent}>
         <DialogHeader>
-          <DialogTitle className="flex items-center space-x-2">
-            <Settings className="w-5 h-5" />
+          <DialogTitle className={styles.titleRow}>
+            <Settings className={styles.icon} />
             <span>Settings</span>
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className={styles.description}>
             Manage your account and chat history preferences.
           </DialogDescription>
         </DialogHeader>
 
-        <Tabs defaultValue="account" className="flex-1 flex flex-col min-h-0">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="account"><User className="w-4 h-4 mr-2" />Account</TabsTrigger>
-            <TabsTrigger value="history"><MessageSquare className="w-4 h-4 mr-2" />Chat History</TabsTrigger>
+        <Tabs defaultValue="account" className={styles.tabsRoot}>
+          <TabsList className={styles.tabsList}>
+            <TabsTrigger value="account" className={styles.tabTrigger}><User className={styles.tabIcon} />Account</TabsTrigger>
+            <TabsTrigger value="history" className={styles.tabTrigger}><MessageSquare className={styles.tabIcon} />Chat History</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="account" className="flex-1 mt-4 min-h-0">
-            <ScrollArea className="h-full pr-4">
-              <div className="space-y-6">
+          <TabsContent value="account" className={styles.tabsContent}>
+            <ScrollArea className={styles.scroll}>
+              <div className={styles.stack}>
                 <Card>
                   <CardHeader>
                     <CardTitle>Profile Information</CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="name">Display Name</Label>
-                        <Input id="name" value={user ? JSON.parse(user).name : profile.name} onChange={(e) => setProfile(p => ({ ...p, name: e.target.value }))} />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="email">Email Address</Label>
-                        <Input id="email" type="email" value={user ? JSON.parse(user).email : profile.email} onChange={(e) => setProfile(p => ({ ...p, email: e.target.value }))} />
-                      </div>
+                  <CardContent className={styles.cardContent}>
+                    <div className={styles.formGroup}>
+                      <Label htmlFor="name">Display Name</Label>
+                      <Input
+                        id="name"
+                        value={user ? JSON.parse(user).name : profile.name}
+                        onChange={(e) => setProfile(p => ({ ...p, name: e.target.value }))}
+                      />
+                    </div>
+
+                    <div className={styles.formGroup}>
+                      <Label htmlFor="email">Email Address</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        value={user ? JSON.parse(user).email : profile.email}
+                        onChange={(e) => setProfile(p => ({ ...p, email: e.target.value }))}
+                      />
+                    </div>
                   </CardContent>
                 </Card>
+
                 <Card>
                   <CardHeader>
                     <CardTitle>Preferences</CardTitle>
                     <CardDescription>Customize your experience.</CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="theme-select">Theme</Label> 
-                      <select 
-                        id="theme-select" 
+                  <CardContent className={styles.cardContent}>
+                    <div className={styles.rowBetween}>
+                      <Label htmlFor="theme-select">Theme</Label>
+                      <select
+                        id="theme-select"
                         aria-label="Theme Preference"
-                        value={profile.preferences.theme} 
-                        onChange={handleThemeChange} 
-                        className="bg-transparent border rounded-md p-2"
+                        value={profile.preferences.theme}
+                        onChange={handleThemeChange}
+                        className={styles.select}
                       >
                         <option value="light">Light</option>
                         <option value="dark">Dark</option>
@@ -150,40 +169,43 @@ export function SettingsDialog({
               </div>
             </ScrollArea>
           </TabsContent>
-          <TabsContent value="history" className="flex-1 mt-4 min-h-0">
-            <ScrollArea className="h-full pr-4">
-              <div className="space-y-6">
+
+          <TabsContent value="history" className={styles.tabsContent}>
+            <ScrollArea className={styles.scroll}>
+              <div className={styles.stack}>
                 <Card>
                   <CardHeader>
                     <CardTitle>Storage Overview</CardTitle>
                   </CardHeader>
-                  <CardContent className="grid grid-cols-3 gap-4 text-center">
-                    <div>
-                      <p className="text-2xl font-bold">{chatSessions.length}</p>
-                      <p className="text-sm text-muted-foreground">Sessions</p>
+                  <CardContent className={styles.storageGrid}>
+                    <div className={styles.stat}>
+                      <p className={styles.statValue}>{chatSessions.length}</p>
+                      <p className={styles.statLabel}>Sessions</p>
                     </div>
-                    <div>
-                      <p className="text-2xl font-bold">{chatSessions.reduce((acc, s) => acc + s.messages.length, 0)}</p>
-                      <p className="text-sm text-muted-foreground">Messages</p>
+                    <div className={styles.stat}>
+                      <p className={styles.statValue}>{chatSessions.reduce((acc, s) => acc + s.messages.length, 0)}</p>
+                      <p className={styles.statLabel}>Messages</p>
                     </div>
-                    <div>
-                      <p className="text-2xl font-bold">{formatStorageSize(chatSessions)}</p>
-                      <p className="text-sm text-muted-foreground">Used</p>
+                    <div className={styles.stat}>
+                      <p className={styles.statValue}>{formatStorageSize(chatSessions)}</p>
+                      <p className={styles.statLabel}>Used</p>
                     </div>
                   </CardContent>
                 </Card>
+
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-destructive">Danger Zone</CardTitle>
+                    <CardTitle className={styles.dangerTitle}>Danger Zone</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
-                        <Button variant="destructive" className="w-full">
-                          <AlertTriangle className="w-4 h-4 mr-2" />
+                        <Button variant="destructive" className={styles.fullWidthBtn}>
+                          <AlertTriangle className={styles.alertIcon} />
                           Clear All Chat History
                         </Button>
                       </AlertDialogTrigger>
+
                       <AlertDialogContent>
                         <AlertDialogHeader>
                           <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
