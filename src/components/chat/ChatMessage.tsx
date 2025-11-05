@@ -5,7 +5,8 @@ import { motion } from 'framer-motion';
 import { Bot, User } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { CodeCard } from './CodeCard';
-
+import styles from './ChatMessage.module.css';
+import { cn } from '@/lib/utils';
 
 interface ChatMessageProps {
   message: string;
@@ -17,10 +18,6 @@ type Segment =
   | { type: 'text'; content: string }
   | { type: 'code'; lang: string; content: string };
 
-/**
- * Splits a message into plain-text and fenced-code segments.
- * Supports fences like: ``` or ```sql
- */
 function parseMessageToSegments(message: string): Segment[] {
   const segments: Segment[] = [];
   const fenceRE = /```(?:([a-zA-Z0-9+-]*)\n)?([\s\S]*?)```/g;
@@ -55,38 +52,35 @@ export function ChatMessage({ message, isUser, timestamp }: ChatMessageProps) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.27 }}
-      className={`w-full flex gap-4 ${isUser ? 'justify-end' : ''}`}
+      className={cn(styles.messageContainer, isUser && styles.userMessage)}
     >
       {!isUser && (
-        <Avatar className="flex-shrink-0">
+        <Avatar className={styles.avatar}>
           <AvatarFallback>
             <Bot />
           </AvatarFallback>
         </Avatar>
       )}
 
-      <div className={`max-w-[80%] space-y-2`}>
+      <div className={styles.messageContent}>
         <div
-          className={`px-4 py-3 rounded-lg ${
-            isUser
-              ? 'bg-primary text-primary-foreground rounded-br-none'
-              : 'bg-secondary text-secondary-foreground rounded-bl-none'
-          }`}
+          className={cn(
+            styles.bubble,
+            isUser ? styles.userBubble : styles.botBubble
+          )}
         >
-          {/* Render mixed segments: text and code cards */}
-          <div className="prose prose-sm max-w-none">
+          <div className={styles.prose}>
             {segments.map((seg, i) => {
               if (seg.type === 'text') {
-                // Preserve newlines and spacing
                 return (
-                  <p key={i} className="whitespace-pre-wrap break-words">
+                  <p key={i} className={styles.textSegment}>
                     {seg.content}
                   </p>
                 );
               }
 
               return (
-                <div key={i} className="mt-2">
+                <div key={i} className={styles.codeSegment}>
                   <CodeCard code={seg.content} lang={seg.lang} />
                 </div>
               );
@@ -94,13 +88,16 @@ export function ChatMessage({ message, isUser, timestamp }: ChatMessageProps) {
           </div>
         </div>
 
-        <div className={`text-xs text-muted-foreground ${isUser ? 'text-right' : 'text-left'}`}>
+        <div className={cn(
+          styles.timestamp,
+          isUser ? styles.userTimestamp : styles.botTimestamp
+        )}>
           {timestamp}
         </div>
       </div>
 
       {isUser && (
-        <Avatar className="flex-shrink-0">
+        <Avatar className={styles.avatar}>
           <AvatarFallback>
             <User />
           </AvatarFallback>

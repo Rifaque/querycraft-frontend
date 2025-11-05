@@ -1,0 +1,70 @@
+.card {
+  position: relative;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  margin: 0.5rem 0;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  border: 1px solid hsl(var(--border));
+  background-color: #0b1220;
+}
+
+.header {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  border-bottom: 1px solid hsla(210, 15%, 88%, 0.1);
+  color: #c9d1d9;
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+.copyButton {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  z-index: 20;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border-radius: 0.375rem;
+  color: #c9d1d9;
+  background-color: rgba(255, 255, 255, 0.02);
+  border: none;
+  cursor: pointer;
+}
+
+.copyButton:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.icon {
+  width: 1rem;
+  height: 1rem;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.pre {
+  padding: 1rem;
+  margin: 0;
+  overflow-x: auto;
+  font-size: 0.875rem;
+  background: transparent;
+}
+
+.code {
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+  font-size: 0.875rem;
+}

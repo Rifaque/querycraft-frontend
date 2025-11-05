@@ -1,0 +1,64 @@
+.messageContainer {
+  width: 100%;
+  display: flex;
+  gap: 1rem;
+}
+
+.userMessage {
+  justify-content: flex-end;
+}
+
+.avatar {
+  flex-shrink: 0;
+}
+
+.messageContent {
+  max-width: 80%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.bubble {
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+}
+
+.userBubble {
+  background-color: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  border-bottom-right-radius: 0;
+}
+
+.botBubble {
+  background-color: hsl(var(--secondary));
+  color: hsl(var(--secondary-foreground));
+  border-bottom-left-radius: 0;
+}
+
+.prose {
+  font-size: 0.875rem;
+  max-width: none;
+}
+
+.textSegment {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.codeSegment {
+  margin-top: 0.5rem;
+}
+
+.timestamp {
+  font-size: 0.75rem;
+  color: hsl(var(--muted-foreground));
+}
+
+.userTimestamp {
+  text-align: right;
+}
+
+.botTimestamp {
+  text-align: left;
+}

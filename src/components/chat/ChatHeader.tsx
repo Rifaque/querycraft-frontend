@@ -2,8 +2,7 @@ import { Settings, Database, Bot } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-// We'll add a placeholder for the logo asset
-// import queryCraftLogo from "@/assets/querycraft-logo.png";
+import styles from "./ChatHeader.module.css";
 
 interface ChatHeaderProps {
   selectedModel: string;
@@ -16,32 +15,27 @@ interface ChatHeaderProps {
 
 export function ChatHeader({ selectedModel, onModelChange, onDatabaseImport, onSettingsClick, onWelcomeClick, sidebarTrigger }: ChatHeaderProps) {
   return (
-    <div className="sticky top-0 z-50 bg-card/95 backdrop-blur-lg border-b border-border shadow-sm">
-      <div className="flex items-center justify-between px-6 py-4">
-        <div className="flex items-center space-x-3">
+    <div className={styles.header}>
+      <div className={styles.container}>
+        <div className={styles.left}>
           {sidebarTrigger && (
             <div className="lg:hidden">
               {sidebarTrigger}
             </div>
           )}
-          <div className="w-10 h-10 flex items-center justify-center bg-primary rounded-lg">
-             {/* <img 
-              src={queryCraftLogo.src} 
-              alt="QueryCraft AI" 
-              className="w-8 h-8 object-contain"
-            /> */}
-             <Database className="w-6 h-6 text-primary-foreground" />
+          <div className={styles.logoContainer}>
+             <Database className={styles.logoIcon} />
           </div>
-          <h1 className="text-xl font-semibold text-foreground cursor-pointer" onClick={onWelcomeClick}>
+          <h1 className={styles.title} onClick={onWelcomeClick}>
             QueryCraft
           </h1>
         </div>
         
-        <div className="flex items-center space-x-3">
-          <div className="flex items-center space-x-2">
-            <Bot className="w-4 h-4 text-muted-foreground" />
+        <div className={styles.right}>
+          <div className={styles.modelSelector}>
+            <Bot className={styles.modelIcon} />
             <Select value={selectedModel} onValueChange={onModelChange}>
-              <SelectTrigger className="w-32 h-9 text-sm">
+              <SelectTrigger className={styles.selectTrigger}>
                 <SelectValue placeholder="Select a model" />
               </SelectTrigger>
               <SelectContent>
@@ -50,7 +44,7 @@ export function ChatHeader({ selectedModel, onModelChange, onDatabaseImport, onS
                     <TooltipTrigger asChild>
                       <SelectItem value="qwen:4b">Qwen AI</SelectItem>
                     </TooltipTrigger>
-                    <TooltipContent side="right" align="center" className="max-w-xs text-sm">
+                    <TooltipContent side="right" align="center" className={styles.tooltipContent}>
                       <strong>Qwen (4B)</strong> — faster, smaller model with a lower context window; great for quick, low-latency replies.
                     </TooltipContent>
                   </Tooltip>
@@ -59,7 +53,7 @@ export function ChatHeader({ selectedModel, onModelChange, onDatabaseImport, onS
                     <TooltipTrigger asChild>
                       <SelectItem value="mistral:7b-instruct">Mistral AI</SelectItem>
                     </TooltipTrigger>
-                    <TooltipContent side="right" align="center" className="max-w-xs text-sm">
+                    <TooltipContent side="right" align="center" className={styles.tooltipContent}>
                       <strong>Mistral (7B)</strong> — larger and more capable with a bigger context window; slightly slower but better for complex prompts.
                     </TooltipContent>
                   </Tooltip>
@@ -74,10 +68,10 @@ export function ChatHeader({ selectedModel, onModelChange, onDatabaseImport, onS
                 <Button 
                   variant="ghost" 
                   size="icon" 
-                  className="text-muted-foreground"
+                  className={styles.iconButton}
                   onClick={onDatabaseImport}
                 >
-                  <Database className="w-5 h-5" />
+                  <Database className={styles.icon} />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
@@ -92,10 +86,10 @@ export function ChatHeader({ selectedModel, onModelChange, onDatabaseImport, onS
                 <Button 
                   variant="ghost" 
                   size="icon" 
-                  className="text-muted-foreground"
+                  className={styles.iconButton}
                   onClick={onSettingsClick}
                 >
-                  <Settings className="w-5 h-5" />
+                  <Settings className={styles.icon} />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>

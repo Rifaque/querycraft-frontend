@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { Bot } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import styles from "./TypingIndicator.module.css";
 
 export function TypingIndicator() {
   return (
@@ -11,27 +12,27 @@ export function TypingIndicator() {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
       transition={{ duration: 0.3 }}
-      className="w-full flex gap-4"
+      className={styles.container}
     >
-      <Avatar className="flex-shrink-0">
+      <Avatar className={styles.avatar}>
         <AvatarFallback>
           <Bot />
         </AvatarFallback>
       </Avatar>
       
-      <div className="flex items-center space-x-1 p-3">
+      <div className={styles.dotsContainer}>
         <motion.div
-          className="w-2 h-2 bg-muted-foreground rounded-full"
+          className={styles.dot}
           animate={{ y: [0, -4, 0] }}
           transition={{ duration: 0.8, repeat: Infinity, delay: 0 }}
         />
         <motion.div
-          className="w-2 h-2 bg-muted-foreground rounded-full"
+          className={styles.dot}
           animate={{ y: [0, -4, 0] }}
           transition={{ duration: 0.8, repeat: Infinity, delay: 0.2 }}
         />
         <motion.div
-          className="w-2 h-2 bg-muted-foreground rounded-full"
+          className={styles.dot}
           animate={{ y: [0, -4, 0] }}
           transition={{ duration: 0.8, repeat: Infinity, delay: 0.4 }}
         />

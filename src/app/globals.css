@@ -1,8 +1,4 @@
-/* app/globals.css (or ./styles/globals.css) */
-@import "tailwindcss";
-
-/* design tokens: use @theme in Tailwind v4 */
-@theme {
+:root {
   --background: 0 0% 100%;
   --foreground: 222.2 84% 4.9%;
   --card: 0 0% 100%;
@@ -23,99 +19,92 @@
   --input: 214.3 31.8% 91.4%;
   --ring: 222.2 84% 4.9%;
   --radius: 0.75rem;
+
+  --font-size: 14px;
+  --background-gradient: linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%);
+  --foreground-oklch: oklch(0.145 0 0);
+  --card-oklch: #ffffff;
+  --card-foreground-oklch: oklch(0.145 0 0);
+  --popover-oklch: oklch(1 0 0);
+  --popover-foreground-oklch: oklch(0.145 0 0);
+  --primary-hex: #0ea5e9;
+  --primary-foreground-oklch: oklch(1 0 0);
+  --secondary-hex: #e0f2fe;
+  --secondary-foreground-hex: #0369a1;
+  --muted-hex: #f1f5f9;
+  --muted-foreground-hex: #64748b;
+  --accent-hex: #dbeafe;
+  --accent-foreground-hex: #1e40af;
+  --destructive-hex: #ef4444;
+  --destructive-foreground-hex: #ffffff;
+  --border-rgba: rgba(14, 165, 233, 0.2);
+  --input-transparent: transparent;
+  --input-background: #f8fafc;
+  --switch-background: #cbd5e1;
+  --font-weight-medium: 500;
+  --font-weight-normal: 400;
+  --ring-hex: #0ea5e9;
+  --chart-1: #0ea5e9;
+  --chart-2: #3b82f6;
+  --chart-3: #06b6d4;
+  --chart-4: #8b5cf6;
+  --chart-5: #10b981;
+  --radius-rem: 0.75rem;
+  --sidebar: rgba(248, 250, 252, 0.95);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: #0ea5e9;
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: rgba(224, 242, 254, 0.8);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: rgba(14, 165, 233, 0.15);
+  --sidebar-ring: #0ea5e9;
 }
 
-/* you can still set dark tokens by scoping a .dark class */
-@layer base {
-  :root { 
-     --font-size: 14px;
-      --background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%);
-      --foreground: oklch(0.145 0 0);
-      --card: #ffffff;
-      --card-foreground: oklch(0.145 0 0);
-      --popover: oklch(1 0 0);
-      --popover-foreground: oklch(0.145 0 0);
-      --primary: #0ea5e9;
-      --primary-foreground: oklch(1 0 0);
-      --secondary: #e0f2fe;
-      --secondary-foreground: #0369a1;
-      --muted: #f1f5f9;
-      --muted-foreground: #64748b;
-      --accent: #dbeafe;
-      --accent-foreground: #1e40af;
-      --destructive: #ef4444;
-      --destructive-foreground: #ffffff;
-      --border: rgba(14, 165, 233, 0.2);
-      --input: transparent;
-      --input-background: #f8fafc;
-      --switch-background: #cbd5e1;
-      --font-weight-medium: 500;
-      --font-weight-normal: 400;
-      --ring: #0ea5e9;
-      --chart-1: #0ea5e9;
-      --chart-2: #3b82f6;
-      --chart-3: #06b6d4;
-      --chart-4: #8b5cf6;
-      --chart-5: #10b981;
-      --radius: 0.75rem;
-      --sidebar: rgba(248, 250, 252, 0.95);
-      --sidebar-foreground: oklch(0.145 0 0);
-      --sidebar-primary: #0ea5e9;
-      --sidebar-primary-foreground: oklch(0.985 0 0);
-      --sidebar-accent: rgba(224, 242, 254, 0.8);
-      --sidebar-accent-foreground: oklch(0.205 0 0);
-      --sidebar-border: rgba(14, 165, 233, 0.15);
-      --sidebar-ring: #0ea5e9;/* keep if you want root token fallback — already declared by @theme above */ }
-
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-
-  }
-
-  * {
-    border-color: hsl(var(--border));
-  }
-
-  body {
-    background-color: hsl(var(--background));
-    color: hsl(var(--foreground));
-  }
+.dark {
+  --background: 222.2 84% 4.9%;
+  --foreground: 210 40% 98%;
+  --card: 222.2 84% 4.9%;
+  --card-foreground: 210 40% 98%;
+  --popover: 222.2 84% 4.9%;
+  --popover-foreground: 210 40% 98%;
+  --primary: 210 40% 98%;
+  --primary-foreground: 222.2 47.4% 11.2%;
+  --secondary: 217.2 32.6% 17.5%;
+  --secondary-foreground: 210 40% 98%;
+  --muted: 217.2 32.6% 17.5%;
+  --muted-foreground: 215 20.2% 65.1%;
+  --accent: 217.2 32.6% 17.5%;
+  --accent-foreground: 210 40% 98%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 210 40% 98%;
+  --border: 217.2 32.6% 17.5%;
+  --input: 217.2 32.6% 17.5%;
+  --ring: 212.7 26.8% 83.9%;
 }
 
-/* monospace stack matching ChatGPT style */
-pre, code {
+* {
+  border-color: hsl(var(--border));
+}
+
+body {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
+pre,
+code {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", "Segoe UI Mono", "Noto Mono", monospace;
-  font-size: 0.95rem; /* tweak as needed */
+  font-size: 0.95rem;
   line-height: 1.55;
   tab-size: 2;
   -webkit-font-smoothing: antialiased;
 }
 
-/* Example small tweak to ensure Prism tokens inherit good contrast */
 code[class*="language-"],
 pre[class*="language-"] {
-  color: #c9d1d9; /* base text for code */
+  color: #c9d1d9;
 }
 
-/* Optionally override Prism token colors (example) */
 .token.comment,
 .token.prolog,
 .token.doctype,
@@ -144,12 +133,29 @@ pre[class*="language-"] {
   color: #a5d6a7;
 }
 
-/* adjust scrollbar in code blocks (optional) */
 pre::-webkit-scrollbar {
   height: 8px;
 }
+
 pre::-webkit-scrollbar-thumb {
-  background: rgba(255,255,255,0.06);
+  background: rgba(255, 255, 255, 0.06);
   border-radius: 8px;
 }
 
+@keyframes accordion-down {
+  from {
+    height: 0;
+  }
+  to {
+    height: var(--radix-accordion-content-height);
+  }
+}
+
+@keyframes accordion-up {
+  from {
+    height: var(--radix-accordion-content-height);
+  }
+  to {
+    height: 0;
+  }
+}

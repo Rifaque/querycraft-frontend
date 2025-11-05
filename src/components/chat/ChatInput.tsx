@@ -4,6 +4,8 @@ import { useState, useRef, useEffect } from "react";
 import { Send, Paperclip } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import styles from "./ChatInput.module.css";
+import { cn } from "@/lib/utils";
 
 interface ChatInputProps {
   onSendMessage: (message: string) => void;
@@ -33,7 +35,6 @@ export function ChatInput({ onSendMessage, disabled = false }: ChatInputProps) {
     setMessage(e.target.value);
   };
 
-  // Auto-resize textarea height
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
@@ -42,19 +43,18 @@ export function ChatInput({ onSendMessage, disabled = false }: ChatInputProps) {
   }, [message]);
 
   return (
-    <div className="sticky bottom-0 bg-background/95 backdrop-blur-lg border-t border-border px-4 py-3 sm:px-6 sm:py-4">
-      <div className="max-w-3xl mx-auto">
-        <div className={`flex items-end space-x-2 bg-card rounded-xl border p-2 transition-all duration-200 ${
-          isFocused 
-            ? 'ring-2 ring-ring' 
-            : 'hover:border-primary/50'
-        }`}>
+    <div className={styles.container}>
+      <div className={styles.maxWidthWrapper}>
+        <div className={cn(
+          styles.inputWrapper,
+          isFocused && styles.inputWrapperFocused
+        )}>
           <Button 
             variant="ghost" 
             size="icon" 
-            className="text-muted-foreground shrink-0 h-8 w-8"
+            className={styles.iconButton}
           >
-            <Paperclip className="w-4 h-4" />
+            <Paperclip className={styles.paperclipIcon} />
           </Button>
           
           <Textarea
@@ -65,7 +65,7 @@ export function ChatInput({ onSendMessage, disabled = false }: ChatInputProps) {
             onFocus={() => setIsFocused(true)}
             onBlur={() => setIsFocused(false)}
             placeholder="Message QueryCraft..."
-            className="border-0 resize-none focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent max-h-24 placeholder:text-muted-foreground text-foreground p-0 text-sm"
+            className={styles.textarea}
             disabled={disabled}
             rows={1}
           />
@@ -74,17 +74,16 @@ export function ChatInput({ onSendMessage, disabled = false }: ChatInputProps) {
             onClick={handleSend}
             disabled={!message.trim() || disabled}
             size="icon"
-            className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg shrink-0 h-8 w-8"
+            className={styles.sendButton}
           >
-            <Send className="w-3.5 h-3.5" />
+            <Send className={styles.sendIcon} />
           </Button>
         </div>
         
-        <p className="text-xs text-muted-foreground text-center mt-2 hidden sm:block">
+        <p className={styles.helpText}>
           Press Enter to send, Shift + Enter for new line
         </p>
       </div>
     </div>
   );
 }
-
