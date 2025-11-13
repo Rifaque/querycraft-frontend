@@ -35,11 +35,6 @@ type OnImportResult = UploadResponse | ConnectionSaveResult;
 interface DatabaseImportDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  /**
-   * Called after a successful import/save.
-   * - For file uploads: onImport({ file: <serverFileMeta> })
-   * - For connection save: onImport({ saved: true, key: '<localStorageKey>' })
-   */
   onImport: (result: OnImportResult, connectionString?: string) => void;
 }
 
@@ -81,7 +76,7 @@ export function DatabaseImportDialog({ open, onOpenChange, onImport }: DatabaseI
       const msg = (json && (json.message || json.error)) ? (json.message || json.error) : `Upload failed (${res.status})`;
       throw new Error(msg);
     }
-    return json as UploadResponse; // expected shape enforced by runtime response
+    return json as UploadResponse;
   };
 
   const handleImportClick = async () => {
@@ -100,7 +95,6 @@ export function DatabaseImportDialog({ open, onOpenChange, onImport }: DatabaseI
         setSuccessMsg('File uploaded successfully');
         onImport(uploadResp);
       } catch (err: unknown) {
-        console.error('upload error', err);
         setError(extractErrorMessage(err));
       } finally {
         setLoading(false);
@@ -108,7 +102,6 @@ export function DatabaseImportDialog({ open, onOpenChange, onImport }: DatabaseI
         setSelectedFile(null);
       }
     } else {
-      // connection method: save connection string locally (convenience)
       const cs = connectionString.trim();
       if (!cs) {
         setError('Connection string is empty');
@@ -120,7 +113,6 @@ export function DatabaseImportDialog({ open, onOpenChange, onImport }: DatabaseI
         setSuccessMsg('Connection saved locally');
         onImport({ saved: true, key }, cs);
       } catch (err: unknown) {
-        console.error('save conn error', err);
         setError(extractErrorMessage(err));
       } finally {
         onOpenChange(false);
@@ -129,73 +121,142 @@ export function DatabaseImportDialog({ open, onOpenChange, onImport }: DatabaseI
     }
   };
 
+  // Aurora colors / gradients (direct values)
+  const dialogBackground = `linear-gradient(135deg, rgba(11,18,32,0.88) 0%, rgba(16,33,59,0.88) 100%)`;
+  const cardDefaultBg = `linear-gradient(135deg, rgba(30,41,59,0.88) 0%, rgba(39,52,73,0.90) 100%)`;
+  const cardInactiveBg = `linear-gradient(135deg, rgba(11,18,32,0.88) 0%, rgba(18,24,38,0.88) 100%)`;
+  const borderColor = `rgba(30,41,59,0.88)`;
+  const highlightBorder = `#0ea5e9`;
+  const mutedText = "#94a3b8";
+  const primaryText = "#f8fafc";
+  const errorColor = "#fb7185";   // replaced tailwind text-red-400
+  const successColor = "#10b981"; // replaced tailwind text-green-400
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent
+        className="sm:max-w-[500px]"
+        style={{
+          background: dialogBackground,
+          border: `1px solid ${borderColor}`,
+          color: primaryText,
+          backdropFilter: "blur(10px)",
+          WebkitBackdropFilter: "blur(10px)"
+        }}
+      >
         <DialogHeader>
           <DialogTitle className="flex items-center space-x-2">
-            <Database className="w-5 h-5" />
+            <Database className="w-5 h-5" style={{ color: primaryText }} />
             <span>Import Database</span>
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription style={{ color: mutedText }}>
             Upload a file or connect to an existing database.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6 py-4">
           <div className="grid grid-cols-2 gap-3">
+            {/* Upload File card */}
             <Card
-              className={`cursor-pointer transition-all ${importMethod === 'file' ? 'ring-2 ring-primary' : 'hover:bg-accent'}`}
-              onClick={() => { setImportMethod('file'); setError(null); setSuccessMsg(null); }}
+              className="cursor-pointer transition-all"
+              onClick={() => {
+                setImportMethod('file');
+                setError(null);
+                setSuccessMsg(null);
+              }}
+              style={{
+                background: importMethod === 'file' ? cardDefaultBg : cardInactiveBg,
+                border: importMethod === 'file' ? `2px solid ${highlightBorder}` : `1px solid ${borderColor}`,
+                boxShadow: importMethod === 'file' ? `0 6px 18px rgba(14,165,233,0.06)` : undefined,
+                color: primaryText
+              }}
             >
               <CardContent className="flex flex-col items-center p-4">
-                <FileText className="w-8 h-8 text-muted-foreground mb-2" />
-                <span className="text-sm font-medium">Upload File</span>
-                <span className="text-xs text-muted-foreground text-center">SQL, CSV, JSON, SQLite</span>
+                <FileText className="w-8 h-8 mb-2" style={{ color: mutedText }} />
+                <span className="text-sm font-medium" style={{ color: primaryText }}>Upload File</span>
+                <span className="text-xs" style={{ color: mutedText, textAlign: "center" }}>
+                  SQL, CSV, JSON, SQLite
+                </span>
               </CardContent>
             </Card>
 
+            {/* Connect DB card */}
             <Card
-              className={`cursor-pointer transition-all ${importMethod === 'connection' ? 'ring-2 ring-primary' : 'hover:bg-accent'}`}
-              onClick={() => { setImportMethod('connection'); setError(null); setSuccessMsg(null); }}
+              className="cursor-pointer transition-all"
+              onClick={() => {
+                setImportMethod('connection');
+                setError(null);
+                setSuccessMsg(null);
+              }}
+              style={{
+                background: importMethod === 'connection' ? cardDefaultBg : cardInactiveBg,
+                border: importMethod === 'connection' ? `2px solid ${highlightBorder}` : `1px solid ${borderColor}`,
+                boxShadow: importMethod === 'connection' ? `0 6px 18px rgba(14,165,233,0.06)` : undefined,
+                color: primaryText
+              }}
             >
               <CardContent className="flex flex-col items-center p-4">
-                <Database className="w-8 h-8 text-muted-foreground mb-2" />
-                <span className="text-sm font-medium">Connect DB</span>
-                <span className="text-xs text-muted-foreground text-center">Connection String</span>
+                <Database className="w-8 h-8 mb-2" style={{ color: mutedText }} />
+                <span className="text-sm font-medium" style={{ color: primaryText }}>Connect DB</span>
+                <span className="text-xs" style={{ color: mutedText, textAlign: "center" }}>Connection String</span>
               </CardContent>
             </Card>
           </div>
 
           {importMethod === 'file' && (
             <div className="space-y-2">
-              <Label htmlFor="database-file">Select Database File</Label>
-              <Input id="database-file" type="file" onChange={handleFileChange} />
-              <p className="text-xs text-muted-foreground">Supported: .sql, .csv, .json, .sqlite, .db</p>
+              <Label htmlFor="database-file" style={{ color: primaryText }}>
+                Select Database File
+              </Label>
+              <Input
+                id="database-file"
+                type="file"
+                accept=".sql,.csv,.json,.sqlite,.db"
+                onChange={handleFileChange}
+                style={{
+                  background: "#0f172a",
+                  border: `1px solid ${borderColor}`,
+                  color: primaryText
+                }}
+              />
+              <p className="text-xs" style={{ color: mutedText }}>
+                Supported: .sql, .csv, .json, .sqlite, .db
+              </p>
             </div>
           )}
 
           {importMethod === 'connection' && (
             <div className="space-y-2">
-              <Label htmlFor="connection-string">Database Connection String</Label>
+              <Label htmlFor="connection-string" style={{ color: primaryText }}>
+                Database Connection String
+              </Label>
               <Input
                 id="connection-string"
                 type="text"
                 placeholder="postgresql://user:pass@host:port/db"
                 value={connectionString}
                 onChange={(e) => setConnectionString(e.target.value)}
+                style={{
+                  background: "#0f172a",
+                  border: `1px solid ${borderColor}`,
+                  color: primaryText
+                }}
               />
-              <p className="text-xs text-muted-foreground">
-                We will save this string locally for convenience. For production, avoid storing raw credentials in the browser.
+              <p className="text-xs" style={{ color: mutedText }}>
+                We will save this string locally for convenience.
               </p>
             </div>
           )}
 
-          {error && <div className="text-sm text-red-400">{error}</div>}
-          {successMsg && <div className="text-sm text-green-400">{successMsg}</div>}
+          {error && <div className="text-sm" style={{ color: errorColor }}>{error}</div>}
+          {successMsg && <div className="text-sm" style={{ color: successColor }}>{successMsg}</div>}
 
           <div className="flex justify-end space-x-2 pt-4">
-            <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
+            <Button
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={loading}
+            >
               Cancel
             </Button>
             <Button

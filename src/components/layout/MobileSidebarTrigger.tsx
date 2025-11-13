@@ -54,15 +54,32 @@ export function MobileSidebarTrigger({
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetTrigger asChild>
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="text-muted-foreground"
+        <Button
+          variant="ghost"
+          size="icon"
+          // Aurora-styled icon button (direct hex)
+          style={{
+            color: "#94a3b8", // muted text
+            background: "transparent",
+            borderRadius: 8,
+            padding: 6,
+          }}
         >
           <Menu className="w-5 h-5" />
         </Button>
       </SheetTrigger>
-      <SheetContent side="left" className="p-0 w-80">
+
+      <SheetContent
+        side="left"
+        className="p-0 w-80"
+        // Aurora panel background + subtle border to match sidebar-aurora
+        style={{
+          background: "linear-gradient(180deg, rgba(2,8,23,0.95), rgba(2,8,23,0.98))",
+          color: "#f8fafc",
+          borderRight: "1px solid rgba(14,165,233,0.15)",
+          boxShadow: "0 8px 30px rgba(2,8,23,0.6)",
+        }}
+      >
         <ChatSidebar
           chatSessions={chatSessions}
           currentSessionId={currentSessionId}

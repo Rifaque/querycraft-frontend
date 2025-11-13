@@ -20,18 +20,6 @@ import { Float, ContactShadows, useGLTF } from "@react-three/drei";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || '';
 
-// ------------------------------------------------------------------
-// QueryCraft — EPIC v2
-// - This file is intentionally modular (multiple small components in one file)
-// - Features added: Lottie hero (placeholder), streaming SQL mock, testimonial carousel,
-//   sticky nav, scroll reveal animations, A/B-ready signup form, accessibility notes.
-//
-// Recommended installs:
-// npm i framer-motion three @react-three/fiber @react-three/drei react-lottie-player lucide-react
-// (plus tailwind, shadcn/ui or your component system)
-// ------------------------------------------------------------------
-
-// -------------------------- Utilities ---------------------------------
 function useTypingStream(text: string, ms = 30) {
   const [output, setOutput] = useState("");
   useEffect(() => {
@@ -54,7 +42,6 @@ function useTypingStream(text: string, ms = 30) {
   return output;
 }
 
-// ------------------------ Particles Canvas -----------------------------
 function ParticlesBackground() {
   const ref = useRef<HTMLCanvasElement | null>(null);
   useEffect(() => {
@@ -164,32 +151,6 @@ function FeatureCard({ icon, title, desc }: { icon: React.ReactNode; title: stri
   );
 }
 
-// -------------------------- Testimonials --------------------------------
-// function Testimonials() {
-//   const slides = [
-//     { quote: "QueryCraft turned our analysts into data ninjas — instant insights.", who: "Maya, Data Lead @ Nova" },
-//     { quote: "The NL→SQL demo sold our CEO in 5 minutes. Game changer.", who: "Arun, CTO @ ScaleOps" },
-//     { quote: "Safe, fast, and delightful — we migrated our dashboards to QueryCraft.", who: "Leah, BI Manager" },
-//   ];
-//   const [i, setI] = useState(0);
-//   useEffect(() => {
-//     const t = setInterval(() => setI((s) => (s + 1) % slides.length), 4200);
-//     return () => clearInterval(t);
-//   }, [slides.length]);
-//   return (
-//     <div className="p-6 rounded-2xl bg-white/6 border border-white/6">
-//       <div className="flex items-center gap-4">
-//         <div className="text-3xl"><Star className="w-6 h-6 text-amber-400" /></div>
-//         <div>
-//           <div className="text-sm text-white/80 italic">&quot;{slides[i].quote}&quot;</div>
-//           <div className="text-xs text-white/60 mt-2">— {slides[i].who}</div>
-//         </div>
-//       </div>
-//     </div>
-//   );
-// }
-
-// -------------------------- Main Page ----------------------------------
 export default function IntroPageV2({ onShowAuth }: { onShowAuth?: () => void }) {
   const features = [
     { icon: <Database className="w-6 h-6" />, title: "Smart DB queries", description: "Precise, optimized SQL with safety checks." },

@@ -21,17 +21,20 @@ export function TypingIndicator() {
       
       <div className="flex items-center space-x-1 p-3">
         <motion.div
-          className="w-2 h-2 bg-muted-foreground rounded-full"
+          className="w-2 h-2 rounded-full"
+          style={{ background: "#94a3b8" }}
           animate={{ y: [0, -4, 0] }}
           transition={{ duration: 0.8, repeat: Infinity, delay: 0 }}
         />
         <motion.div
-          className="w-2 h-2 bg-muted-foreground rounded-full"
+          className="w-2 h-2 rounded-full"
+          style={{ background: "#94a3b8" }}
           animate={{ y: [0, -4, 0] }}
           transition={{ duration: 0.8, repeat: Infinity, delay: 0.2 }}
         />
         <motion.div
-          className="w-2 h-2 bg-muted-foreground rounded-full"
+          className="w-2 h-2 rounded-full"
+          style={{ background: "#94a3b8" }}
           animate={{ y: [0, -4, 0] }}
           transition={{ duration: 0.8, repeat: Infinity, delay: 0.4 }}
         />
