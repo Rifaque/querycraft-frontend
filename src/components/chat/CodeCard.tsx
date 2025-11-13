@@ -27,7 +27,7 @@ type QueryResult = {
   error?: string;
 };
 
-/* --------------------- helpers (updated) --------------------- */
+/* --------------------- helpers (updated types) --------------------- */
 function tryParseJsonLike(objStr: string): Record<string, unknown> | unknown[] | null {
   if (!objStr || typeof objStr !== 'string') return null;
   let s = objStr.trim();
@@ -60,7 +60,11 @@ function tryParseJsonLike(objStr: string): Record<string, unknown> | unknown[] |
     const revived = reviveRegexPlaceholders(parsed);
     // STEP E: normalize regex objects into pattern + $options injection where appropriate
     const normalized = normalizeRegexObjects(revived);
-    return normalized;
+    // normalized may be unknown (but should be object/array)
+    if (typeof normalized === 'object' && normalized !== null) {
+      return normalized as Record<string, unknown> | unknown[];
+    }
+    return null;
   } catch {
     return null;
   }
@@ -71,11 +75,12 @@ function tryParseJsonLike(objStr: string): Record<string, unknown> | unknown[] |
  * { __isRegex: true, pattern: "...", flags: "i" }
  * (keeps flags available for later injection)
  */
-function reviveRegexPlaceholders(obj: any): any {
+function reviveRegexPlaceholders(obj: unknown): unknown {
   if (obj === null || obj === undefined) return obj;
 
   if (typeof obj === 'string') {
-    const marker = /^__REGEX__([^_]+)__([gimsuy]*)__$/;
+    // allow '=' and other base64 chars in capture
+    const marker = /^__REGEX__(.+)__([gimsuy]*)__$/;
     const m = obj.match(marker);
     if (m) {
       const encoded = m[1];
@@ -101,9 +106,10 @@ function reviveRegexPlaceholders(obj: any): any {
   }
 
   if (typeof obj === 'object') {
-    const out: Record<string, any> = {};
+    const out: Record<string, unknown> = {};
     for (const k of Object.keys(obj)) {
-      out[k] = reviveRegexPlaceholders((obj as Record<string, any>)[k]);
+      const val = (obj as Record<string, unknown>)[k];
+      out[k] = reviveRegexPlaceholders(val);
     }
     return out;
   }
@@ -119,7 +125,7 @@ function reviveRegexPlaceholders(obj: any): any {
  *
  * Returns a new object (doesn't mutate original input).
  */
-function normalizeRegexObjects(obj: any): any {
+function normalizeRegexObjects(obj: unknown): unknown {
   if (obj === null || obj === undefined) return obj;
 
   if (Array.isArray(obj)) {
@@ -128,20 +134,21 @@ function normalizeRegexObjects(obj: any): any {
 
   if (typeof obj === 'object') {
     // first shallow-copy to inspect siblings
-    const out: Record<string, any> = {};
+    const out: Record<string, unknown> = {};
     for (const k of Object.keys(obj)) {
-      const v = (obj as Record<string, any>)[k];
-      // if v is the special regex object
-      if (v && typeof v === 'object' && v.__isRegex) {
-        // replace with the plain pattern string
-        out[k] = v.pattern;
-        // if the key itself is "$regex" and there is no $options in original obj but flags exist, add $options
-        if (k === '$regex' && !(obj as Record<string, any>)['$options'] && v.flags) {
-          out['$options'] = v.flags;
+      const v = (obj as Record<string, unknown>)[k];
+      if (v && typeof v === 'object' && !Array.isArray(v)) {
+        const vObj = v as Record<string, unknown>;
+        // detect the special regex object marker
+        if (vObj['__isRegex'] === true && typeof vObj['pattern'] === 'string') {
+          out[k] = vObj['pattern'];
+          if (k === '$regex' && vObj['flags'] && !(obj as Record<string, unknown>)['$options']) {
+            out['$options'] = vObj['flags'] as unknown as string;
+          }
+          continue;
         }
-      } else {
-        out[k] = normalizeRegexObjects(v);
       }
+      out[k] = normalizeRegexObjects(v);
     }
     return out;
   }
@@ -349,7 +356,6 @@ export function CodeCard({
   const primaryText = '#c9d1d9';
   const mutedText = '#94a3b8';
   const highlight = 'linear-gradient(90deg, rgba(14,165,233,1), rgba(139,92,246,1))';
-  const successColor = '#10b981';
   const dangerColor = '#fb7185';
   const subtleShadow = '0 10px 30px rgba(2,8,23,0.6)';
   const elevatedShadow = '0 18px 50px rgba(2,8,23,0.7)';
