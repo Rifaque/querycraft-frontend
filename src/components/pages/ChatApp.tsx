@@ -600,9 +600,15 @@ export function ChatApp({ userProfile, onLogout }: ChatAppProps) {
     setShowDatabaseDialog(true);
   };
 
+  // Aurora visual tokens (direct values)
+  const auroraBackground = 'linear-gradient(135deg, #020817 0%, #071129 25%, #0b1f2b 50%)';
+  const sidebarBg = 'linear-gradient(180deg, rgba(2,8,23,0.95), rgba(2,8,23,0.98))';
+  const sidebarBorder = '1px solid rgba(14,165,233,0.15)';
+  const primaryText = '#f8fafc';
+
   return (
-    <div className="h-screen flex bg-background">
-      <div className="hidden lg:block w-80 flex-shrink-0">
+    <div className="h-screen flex" style={{ background: auroraBackground, color: primaryText }}>
+      <div className="hidden lg:block w-80 flex-shrink-0" style={{ background: sidebarBg, borderRight: sidebarBorder }}>
         <ChatSidebar
           key={userProfile.email}
           chatSessions={chatSessions}

@@ -42,20 +42,20 @@ export function ChatInput({ onSendMessage, disabled = false }: ChatInputProps) {
   }, [message]);
 
   return (
-    <div className="sticky bottom-0 bg-background/95 backdrop-blur-lg border-t border-border px-4 py-3 sm:px-6 sm:py-4">
+    <div className="sticky bottom-0 bg-background/95 backdrop-blur-lg border-border px-4 py-3 sm:px-6 sm:py-4">
       <div className="max-w-3xl mx-auto">
-        <div className={`flex items-end space-x-2 bg-card rounded-xl border p-2 transition-all duration-200 ${
+        <div className={`flex items-end space-x-2 bg-[#020817] rounded-xl border p-4 transition-all duration-200 ${
           isFocused 
-            ? 'ring-2 ring-ring' 
+            ? 'ring-2 ring-primary/50' 
             : 'hover:border-primary/50'
         }`}>
-          <Button 
+          {/* <Button 
             variant="ghost" 
             size="icon" 
             className="text-muted-foreground shrink-0 h-8 w-8"
           >
             <Paperclip className="w-4 h-4" />
-          </Button>
+          </Button> */}
           
           <Textarea
             ref={textareaRef}

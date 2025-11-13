@@ -6,7 +6,6 @@ import { Bot, User } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { CodeCard } from './CodeCard';
 
-
 interface ChatMessageProps {
   message: string;
   isUser: boolean;
@@ -50,6 +49,26 @@ function parseMessageToSegments(message: string): Segment[] {
 export function ChatMessage({ message, isUser, timestamp }: ChatMessageProps) {
   const segments = parseMessageToSegments(message);
 
+  // Aurora palette (direct values)
+  const primaryBg = '#f8fafc'; // light-on-dark bubble
+  const primaryFg = '#0f172a'; // dark text on primary
+  const secondaryBg = '#1e293b'; // slate/blue-gray bubble for bot
+  const secondaryFg = '#f8fafc'; // bot text color
+  const mutedText = '#94a3b8';
+  const bubbleShadow = '0 6px 18px rgba(2,8,23,0.6)';
+
+  const userBubbleStyle: React.CSSProperties = {
+    background: secondaryBg,
+    color: secondaryFg,
+    borderRadius: '12px',
+    boxShadow: bubbleShadow,
+    padding: '12px 16px',
+  };
+
+  const botBubbleStyle: React.CSSProperties = {
+    padding: '6px 9px',
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -67,34 +86,31 @@ export function ChatMessage({ message, isUser, timestamp }: ChatMessageProps) {
 
       <div className={`max-w-[80%] space-y-2`}>
         <div
-          className={`px-4 py-3 rounded-lg ${
-            isUser
-              ? 'bg-primary text-primary-foreground rounded-br-none'
-              : 'bg-secondary text-secondary-foreground rounded-bl-none'
-          }`}
+          style={isUser ? userBubbleStyle : botBubbleStyle}
+          // keep prose for nice typography inside messages
+          className="prose prose-sm max-w-none"
         >
           {/* Render mixed segments: text and code cards */}
-          <div className="prose prose-sm max-w-none">
-            {segments.map((seg, i) => {
-              if (seg.type === 'text') {
-                // Preserve newlines and spacing
-                return (
-                  <p key={i} className="whitespace-pre-wrap break-words">
-                    {seg.content}
-                  </p>
-                );
-              }
-
+          {segments.map((seg, i) => {
+            if (seg.type === 'text') {
+              // plain text: preserve newlines and spacing
               return (
-                <div key={i} className="mt-2">
-                  <CodeCard code={seg.content} lang={seg.lang} />
-                </div>
+                <p key={i} className="whitespace-pre-wrap break-words" style={{ margin: 0, color: secondaryFg }}>
+                  {seg.content}
+                </p>
               );
-            })}
-          </div>
+            }
+
+            // code segment: render CodeCard (keeps its own styling)
+            return (
+              <div key={i} className="mt-2">
+                <CodeCard code={seg.content} lang={seg.lang} />
+              </div>
+            );
+          })}
         </div>
 
-        <div className={`text-xs text-muted-foreground ${isUser ? 'text-right' : 'text-left'}`}>
+        <div style={{ color: mutedText }} className={`text-xs ${isUser ? 'text-right' : 'text-left'}`}>
           {timestamp}
         </div>
       </div>

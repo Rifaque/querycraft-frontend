@@ -1,155 +1,150 @@
 /* app/globals.css (or ./styles/globals.css) */
+/* Tailwind import kept if you still want utility classes */
 @import "tailwindcss";
 
-/* design tokens: use @theme in Tailwind v4 */
-@theme {
-  --background: 0 0% 100%;
-  --foreground: 222.2 84% 4.9%;
-  --card: 0 0% 100%;
-  --card-foreground: 222.2 84% 4.9%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 222.2 84% 4.9%;
-  --primary: 222.2 47.4% 11.2%;
-  --primary-foreground: 210 40% 98%;
-  --secondary: 210 40% 96.1%;
-  --secondary-foreground: 222.2 47.4% 11.2%;
-  --muted: 210 40% 96.1%;
-  --muted-foreground: 215.4 16.3% 46.9%;
-  --accent: 210 40% 96.1%;
-  --accent-foreground: 222.2 47.4% 11.2%;
-  --destructive: 0 84.2% 60.2%;
-  --destructive-foreground: 210 40% 98%;
-  --border: 214.3 31.8% 91.4%;
-  --input: 214.3 31.8% 91.4%;
-  --ring: 222.2 84% 4.9%;
-  --radius: 0.75rem;
+/* FULL DARK MODE — no CSS variables, direct hex & rgba values */
+
+/* ---------- Aurora gradient system ---------- */
+/* Use these classes to get a consistent dark 'Aurora' look */
+
+/* primary aurora background for app/container */
+.bg-aurora {
+  background: linear-gradient(135deg,
+    #020817 0%,
+    #071129 25%,
+    #0b1f2b 50%,
+    #081126 75%,
+    #020817 100%);
+  color: #f8fafc; /* near-white primary text */
 }
 
-/* you can still set dark tokens by scoping a .dark class */
-@layer base {
-  :root { 
-     --font-size: 14px;
-      --background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%);
-      --foreground: oklch(0.145 0 0);
-      --card: #ffffff;
-      --card-foreground: oklch(0.145 0 0);
-      --popover: oklch(1 0 0);
-      --popover-foreground: oklch(0.145 0 0);
-      --primary: #0ea5e9;
-      --primary-foreground: oklch(1 0 0);
-      --secondary: #e0f2fe;
-      --secondary-foreground: #0369a1;
-      --muted: #f1f5f9;
-      --muted-foreground: #64748b;
-      --accent: #dbeafe;
-      --accent-foreground: #1e40af;
-      --destructive: #ef4444;
-      --destructive-foreground: #ffffff;
-      --border: rgba(14, 165, 233, 0.2);
-      --input: transparent;
-      --input-background: #f8fafc;
-      --switch-background: #cbd5e1;
-      --font-weight-medium: 500;
-      --font-weight-normal: 400;
-      --ring: #0ea5e9;
-      --chart-1: #0ea5e9;
-      --chart-2: #3b82f6;
-      --chart-3: #06b6d4;
-      --chart-4: #8b5cf6;
-      --chart-5: #10b981;
-      --radius: 0.75rem;
-      --sidebar: rgba(248, 250, 252, 0.95);
-      --sidebar-foreground: oklch(0.145 0 0);
-      --sidebar-primary: #0ea5e9;
-      --sidebar-primary-foreground: oklch(0.985 0 0);
-      --sidebar-accent: rgba(224, 242, 254, 0.8);
-      --sidebar-accent-foreground: oklch(0.205 0 0);
-      --sidebar-border: rgba(14, 165, 233, 0.15);
-      --sidebar-ring: #0ea5e9;/* keep if you want root token fallback — already declared by @theme above */ }
-
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-
-  }
-
-  * {
-    border-color: hsl(var(--border));
-  }
-
-  body {
-    background-color: hsl(var(--background));
-    color: hsl(var(--foreground));
-  }
+/* subtle glassy card using aurora overlay */
+.card-aurora {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0.01) 100%),
+    linear-gradient(135deg, rgba(14,165,233,0.06), rgba(139,92,246,0.03));
+  color: #f8fafc;
+  border: 1px solid #1e293b; /* slate/blue-gray border */
+  border-radius: 0.75rem;
+  backdrop-filter: blur(6px);
 }
 
-/* monospace stack matching ChatGPT style */
+/* popovers / overlays */
+.popover-aurora {
+  background: #020817;
+  color: #f8fafc;
+  border: 1px solid #1e293b;
+  box-shadow: 0 6px 18px rgba(2,8,23,0.6);
+}
+
+/* primary light-on-dark button / pill */
+.btn-aurora-primary {
+  background: #f8fafc;           /* light on dark */
+  color: #0f172a;               /* dark-on-primary */
+  border-radius: 999px;
+  padding: 0.5rem 1rem;
+  border: 1px solid rgba(15,23,42,0.06);
+  font-weight: 500;
+}
+
+/* secondary / muted elements */
+.muted-aurora {
+  color: #94a3b8; /* muted text */
+}
+
+/* destructive */
+.destructive-aurora {
+  background: #7f1d1d;
+  color: #f8fafc;
+}
+
+/* inputs / borders */
+.input-aurora {
+  background: rgba(255,255,255,0.02);
+  color: #f8fafc;
+  border: 1px solid #1e293b;
+  border-radius: 0.5rem;
+}
+
+/* sidebar look */
+.sidebar-aurora {
+  background: linear-gradient(180deg, rgba(2,8,23,0.95), rgba(2,8,23,0.98));
+  color: #f8fafc;
+  border-right: 1px solid rgba(14,165,233,0.15);
+}
+
+/* accent / small glow accent bars */
+.accent-aurora {
+  background: linear-gradient(90deg, rgba(14,165,233,1) 0%, rgba(139,92,246,1) 100%);
+  height: 4px;
+  border-radius: 6px;
+}
+
+/* chart palette (named classes contain direct hex) */
+.chart-1 { background: #0ea5e9; } /* bright cyan */
+.chart-2 { background: #3b82f6; } /* blue */
+.chart-3 { background: #06b6d4; } /* teal */
+.chart-4 { background: #8b5cf6; } /* purple */
+.chart-5 { background: #10b981; } /* green */
+
+/* code block styling (monospace) */
 pre, code {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", "Segoe UI Mono", "Noto Mono", monospace;
-  font-size: 0.95rem; /* tweak as needed */
+  font-size: 0.95rem;
   line-height: 1.55;
   tab-size: 2;
   -webkit-font-smoothing: antialiased;
+  color: #c9d1d9; /* slightly desaturated white */
+  background: transparent;
 }
 
-/* Example small tweak to ensure Prism tokens inherit good contrast */
-code[class*="language-"],
-pre[class*="language-"] {
-  color: #c9d1d9; /* base text for code */
-}
-
-/* Optionally override Prism token colors (example) */
+/* Prism tokens */
 .token.comment,
 .token.prolog,
 .token.doctype,
-.token.cdata {
-  color: #6a737d;
-}
+.token.cdata { color: #6a737d; }
 
 .token.keyword,
 .token.boolean,
 .token.constant,
 .token.deleted,
 .token.selector,
-.token.tag {
-  color: #ff7b72;
-}
+.token.tag { color: #ff7b72; }
 
 .token.function,
-.token.class-name {
-  color: #d2a8ff;
-}
+.token.class-name { color: #d2a8ff; }
 
 .token.string,
 .token.attr-value,
 .token.regex,
-.token.variable {
-  color: #a5d6a7;
-}
+.token.variable { color: #a5d6a7; }
 
-/* adjust scrollbar in code blocks (optional) */
-pre::-webkit-scrollbar {
-  height: 8px;
-}
+/* scrollbar for code blocks */
+pre::-webkit-scrollbar { height: 8px; }
 pre::-webkit-scrollbar-thumb {
   background: rgba(255,255,255,0.06);
   border-radius: 8px;
 }
 
+/* Base layer that uses aurora as root look */
+@layer base {
+  * {
+    border-color: #1e293b; /* resolved border color */
+  }
+
+  html, body, #__next, #root {
+    height: 100%;
+  }
+
+  body {
+    background: linear-gradient(135deg, #020817 0%, #071129 25%, #0b1f2b 50%);
+    color: #f8fafc;
+    font-size: 14px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    margin: 0;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* if you used .dark rules before, remove them; root is dark */
+}

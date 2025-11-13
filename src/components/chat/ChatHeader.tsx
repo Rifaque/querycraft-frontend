@@ -16,7 +16,7 @@ interface ChatHeaderProps {
 
 export function ChatHeader({ selectedModel, onModelChange, onDatabaseImport, onSettingsClick, onWelcomeClick, sidebarTrigger }: ChatHeaderProps) {
   return (
-    <div className="sticky top-0 z-50 bg-card/95 backdrop-blur-lg border-b border-border shadow-sm">
+    <div className="sticky top-0 z-50 bg-background backdrop-blur-lg border-b border-[#1e293b] shadow-sm">
       <div className="flex items-center justify-between px-6 py-4">
         <div className="flex items-center space-x-3">
           {sidebarTrigger && (
@@ -39,7 +39,7 @@ export function ChatHeader({ selectedModel, onModelChange, onDatabaseImport, onS
         
         <div className="flex items-center space-x-3">
           <div className="flex items-center space-x-2">
-            <Bot className="w-4 h-4 text-muted-foreground" />
+            <Bot className="w-4 h-4 text-[#94a3b8]" />
             <Select value={selectedModel} onValueChange={onModelChange}>
               <SelectTrigger className="w-32 h-9 text-sm">
                 <SelectValue placeholder="Select a model" />
@@ -74,7 +74,7 @@ export function ChatHeader({ selectedModel, onModelChange, onDatabaseImport, onS
                 <Button 
                   variant="ghost" 
                   size="icon" 
-                  className="text-muted-foreground"
+                  className="text-[#94a3b8]"
                   onClick={onDatabaseImport}
                 >
                   <Database className="w-5 h-5" />
@@ -92,7 +92,7 @@ export function ChatHeader({ selectedModel, onModelChange, onDatabaseImport, onS
                 <Button 
                   variant="ghost" 
                   size="icon" 
-                  className="text-muted-foreground"
+                  className="text-[#94a3b8]"
                   onClick={onSettingsClick}
                 >
                   <Settings className="w-5 h-5" />

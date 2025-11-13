@@ -10,10 +10,24 @@ const chatHistory = [
 
 export const Sidebar = () => {
   return (
-    <aside className="hidden w-64 shrink-0 flex-col border-r border-gray-700 bg-gray-800 md:flex">
+    <aside
+      className="hidden w-64 shrink-0 flex-col md:flex"
+      style={{
+        background: '#0b1220',
+        borderRight: '1px solid #1e293b'
+      }}
+    >
       {/* Top section: New Chat button */}
       <div className="p-4">
-        <button className="flex w-full items-center justify-center gap-2 rounded-lg border border-gray-600 py-2 font-semibold text-white transition-colors hover:bg-gray-700">
+        <button
+          className="flex w-full items-center justify-center gap-2 rounded-lg py-2 font-semibold transition-colors"
+          style={{
+            border: '1px solid #475569',
+            color: 'white'
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.background = '#1e293b')}
+          onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+        >
           <svg
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
@@ -39,7 +53,16 @@ export const Sidebar = () => {
             <li key={chat.id}>
               <a
                 href="#"
-                className="block truncate rounded-md px-3 py-2 text-sm text-gray-300 transition-colors hover:bg-gray-700 hover:text-white"
+                className="block truncate rounded-md px-3 py-2 text-sm transition-colors"
+                style={{ color: '#94a3b8' }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = '#1e293b';
+                  e.currentTarget.style.color = 'white';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'transparent';
+                  e.currentTarget.style.color = '#94a3b8';
+                }}
               >
                 {chat.title}
               </a>
@@ -49,8 +72,15 @@ export const Sidebar = () => {
       </nav>
 
       {/* Bottom section: User profile */}
-      <div className="mt-auto border-t border-gray-700 p-4">
-        <div className="flex cursor-pointer items-center gap-3 rounded-md p-2 hover:bg-gray-700">
+      <div
+        className="mt-auto p-4"
+        style={{ borderTop: '1px solid #1e293b' }}
+      >
+        <div
+          className="flex cursor-pointer items-center gap-3 rounded-md p-2 transition-colors"
+          onMouseEnter={(e) => (e.currentTarget.style.background = '#1e293b')}
+          onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+        >
           <div className="h-8 w-8 rounded-full bg-electric-blue"></div>
           <span className="font-semibold text-white">Raif</span>
         </div>

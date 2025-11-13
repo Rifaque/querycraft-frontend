@@ -15,8 +15,8 @@ const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'https://apiquerycraft.hubz
 type SourceInfo = {
   sourceType?: 'file' | 'connection';
   fileId?: string;
-  connectionKey?: string; // localStorage key for connection string
-  connectionString?: string; // optional direct string override
+  connectionKey?: string;
+  connectionString?: string;
 };
 
 type QueryResult = {
@@ -27,57 +27,130 @@ type QueryResult = {
   error?: string;
 };
 
+/* --------------------- helpers (updated) --------------------- */
 function tryParseJsonLike(objStr: string): Record<string, unknown> | unknown[] | null {
-  // Heuristic attempt to convert JS-like object literals to JSON and parse.
   if (!objStr || typeof objStr !== 'string') return null;
   let s = objStr.trim();
-
-  // Remove trailing semicolon
   if (s.endsWith(';')) s = s.slice(0, -1);
-
-  // Some people paste surrounding parentheses: ( { ... } )
   if (s.startsWith('(') && s.endsWith(')')) s = s.slice(1, -1).trim();
 
-  // If it already looks like JSON (starts with { or [ or "), try direct parse first
   try {
-    if (s.startsWith('{') || s.startsWith('[') || s.startsWith('"') || s.startsWith("'")) {
-      return JSON.parse(s);
-    }
-  } catch {
-    // continue to heuristic transform
-  }
+    // STEP A: replace regex literals with quoted placeholders that include encoded pattern + flags
+    const regexLiteral = /\/((?:\\.|[^\/\\])+)\/([gimsuy]*)/g;
+    const hasBtoa = typeof btoa === 'function';
+    s = s.replace(regexLiteral, (_m, body, flags) => {
+      const encoded = hasBtoa ? btoa(body) : encodeURIComponent(body);
+      // placeholder stays a JSON string so JSON.parse won't break
+      return `"__REGEX__${encoded}__${flags}__"`;
+    });
 
-  // Replace single-quoted strings with double-quoted strings (naive)
-  s = s.replace(/'([^']*)'/g, (_m, p1) => {
-    const escaped = p1.replace(/"/g, '\\"');
-    return `"${escaped}"`;
-  });
+    // STEP B: convert single-quoted strings to double-quoted strings
+    s = s.replace(/'([^']*)'/g, (_m, p1) => {
+      const escaped = p1.replace(/"/g, '\\"');
+      return `"${escaped}"`;
+    });
 
-  // Quote unquoted keys: { a: 1, $or: [...] } -> { "a": 1, "$or": [...] }
-  s = s.replace(/([{,]\s*)([A-Za-z0-9_$@-]+)\s*:/g, (_m, prefix, key) => {
-    return `${prefix}"${key}":`;
-  });
+    // STEP C: quote unquoted object keys (basic heuristic)
+    s = s.replace(/([{,]\s*)([A-Za-z0-9_$@-]+)\s*:/g, (_m, prefix, key) => `${prefix}"${key}":`);
 
-  // Try parse
-  try {
-    return JSON.parse(s);
+    // Now parse
+    const parsed = JSON.parse(s);
+
+    // STEP D: revive regex placeholders into special objects carrying flags + pattern
+    const revived = reviveRegexPlaceholders(parsed);
+    // STEP E: normalize regex objects into pattern + $options injection where appropriate
+    const normalized = normalizeRegexObjects(revived);
+    return normalized;
   } catch {
     return null;
   }
 }
 
 /**
- * Extract collection name and filter string from common patterns such as:
- * - db.students.find({...})
- * - students.find({...})
- * - students.find({ ... }, { projection })
- *
- * Returns { collection?: string, filterStr?: string }
+ * Replace placeholder strings like "__REGEX__<b64>__flags__" with special objects:
+ * { __isRegex: true, pattern: "...", flags: "i" }
+ * (keeps flags available for later injection)
  */
+function reviveRegexPlaceholders(obj: any): any {
+  if (obj === null || obj === undefined) return obj;
+
+  if (typeof obj === 'string') {
+    const marker = /^__REGEX__([^_]+)__([gimsuy]*)__$/;
+    const m = obj.match(marker);
+    if (m) {
+      const encoded = m[1];
+      const flags = m[2] || '';
+      let decoded: string;
+      try {
+        decoded = typeof atob === 'function' ? atob(encoded) : decodeURIComponent(encoded);
+      } catch {
+        try {
+          decoded = decodeURIComponent(encoded);
+        } catch {
+          decoded = encoded;
+        }
+      }
+      // return a small object so we can handle flags later in context
+      return { __isRegex: true, pattern: decoded, flags };
+    }
+    return obj;
+  }
+
+  if (Array.isArray(obj)) {
+    return obj.map(reviveRegexPlaceholders);
+  }
+
+  if (typeof obj === 'object') {
+    const out: Record<string, any> = {};
+    for (const k of Object.keys(obj)) {
+      out[k] = reviveRegexPlaceholders((obj as Record<string, any>)[k]);
+    }
+    return out;
+  }
+
+  return obj;
+}
+
+/**
+ * Walk parsed object and:
+ * - convert any { __isRegex:true, pattern, flags } found as a value into the pattern string
+ * - if that __isRegex object was the value of "$regex" and there is no sibling "$options",
+ *   inject "$options" with the flags (if flags exist)
+ *
+ * Returns a new object (doesn't mutate original input).
+ */
+function normalizeRegexObjects(obj: any): any {
+  if (obj === null || obj === undefined) return obj;
+
+  if (Array.isArray(obj)) {
+    return obj.map(normalizeRegexObjects);
+  }
+
+  if (typeof obj === 'object') {
+    // first shallow-copy to inspect siblings
+    const out: Record<string, any> = {};
+    for (const k of Object.keys(obj)) {
+      const v = (obj as Record<string, any>)[k];
+      // if v is the special regex object
+      if (v && typeof v === 'object' && v.__isRegex) {
+        // replace with the plain pattern string
+        out[k] = v.pattern;
+        // if the key itself is "$regex" and there is no $options in original obj but flags exist, add $options
+        if (k === '$regex' && !(obj as Record<string, any>)['$options'] && v.flags) {
+          out['$options'] = v.flags;
+        }
+      } else {
+        out[k] = normalizeRegexObjects(v);
+      }
+    }
+    return out;
+  }
+
+  return obj;
+}
+
 function extractCollectionAndFilter(code: string): { collection?: string; filterStr?: string } {
   const trimmed = code.trim();
-
-  // Pattern: db.COLLECTION.find(...)
   const dbFind = trimmed.match(/db\.([A-Za-z0-9_$]+)\.find\s*\(\s*([\s\S]*)\)\s*;?$/m);
   if (dbFind) {
     const col = dbFind[1];
@@ -87,7 +160,6 @@ function extractCollectionAndFilter(code: string): { collection?: string; filter
     return { collection: col, filterStr: inner.split(/\s*,\s*/)[0] };
   }
 
-  // Pattern: COLLECTION.find(...)
   const simpleFind = trimmed.match(/^([A-Za-z0-9_$]+)\.find\s*\(\s*([\s\S]*)\)\s*;?$/m);
   if (simpleFind) {
     const col = simpleFind[1];
@@ -97,7 +169,6 @@ function extractCollectionAndFilter(code: string): { collection?: string; filter
     return { collection: col, filterStr: inner.split(/\s*,\s*/)[0] };
   }
 
-  // If user provided just an object literal or JSON, treat it as filter only (no collection)
   const maybeObj = trimmed;
   if (maybeObj.startsWith('{') || maybeObj.startsWith('[') || maybeObj.startsWith('(')) {
     const obj = extractFirstObject(maybeObj) || maybeObj;
@@ -107,7 +178,6 @@ function extractCollectionAndFilter(code: string): { collection?: string; filter
   return {};
 }
 
-/** Find the first balanced {...} substring and return it (including braces). */
 function extractFirstObject(s: string): string | null {
   const start = s.indexOf('{');
   if (start === -1) return null;
@@ -116,9 +186,7 @@ function extractFirstObject(s: string): string | null {
     const ch = s[i];
     if (ch === '{') depth++;
     else if (ch === '}') depth--;
-    if (depth === 0) {
-      return s.slice(start, i + 1);
-    }
+    if (depth === 0) return s.slice(start, i + 1);
   }
   return null;
 }
@@ -133,6 +201,7 @@ function extractErrorMessage(err: unknown): string {
   }
 }
 
+/* --------------------- CodeCard component (unchanged apart from helpers) --------------------- */
 export function CodeCard({
   code,
   lang,
@@ -144,11 +213,12 @@ export function CodeCard({
   sourceInfo?: SourceInfo;
   authToken?: string | null;
 }) {
-  const [copied, setCopied] = useState<boolean>(false);
-  const [running, setRunning] = useState<boolean>(false);
+  const [copied, setCopied] = useState(false);
+  const [running, setRunning] = useState(false);
   const [results, setResults] = useState<QueryResult | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [maxRows] = useState<number>(200);
+  const [hovered, setHovered] = useState(false);
+  const [maxRows] = useState(200);
   const codeRef = useRef<HTMLElement | null>(null);
 
   const displayLang = lang && lang.trim() ? lang.trim() : 'bash';
@@ -158,9 +228,7 @@ export function CodeCard({
     if (codeRef.current) {
       try {
         Prism.highlightElement(codeRef.current);
-      } catch {
-        // ignore
-      }
+      } catch {}
     }
   }, [code, displayLang]);
 
@@ -194,7 +262,6 @@ export function CodeCard({
       return;
     }
 
-    // Simple destructive guard for SQL-like queries
     const blocked = /\b(drop|truncate|alter|delete|update|insert)\b/i;
     if (blocked.test(trimmed) && !(sourceInfo?.sourceType === 'file')) {
       setError('Query contains potentially destructive statements. Use a read-only connection or confirm in server settings.');
@@ -203,17 +270,12 @@ export function CodeCard({
 
     setRunning(true);
     try {
-      const payload: Record<string, unknown> = {
-        sourceType: sourceInfo?.sourceType || 'connection',
-        maxRows
-      };
+      const payload: Record<string, unknown> = { sourceType: sourceInfo?.sourceType || 'connection', maxRows };
 
-      // File flow
       if (sourceInfo?.sourceType === 'file' && sourceInfo.fileId) {
         payload.fileId = sourceInfo.fileId;
         payload.query = code;
       } else {
-        // Connection flow: get connection string
         const key = sourceInfo?.connectionKey || 'qc_conn_default';
         const cs = typeof window !== 'undefined'
           ? (sourceInfo?.connectionString || localStorage.getItem(key) || undefined)
@@ -224,7 +286,6 @@ export function CodeCard({
         }
         payload.connectionString = cs;
 
-        // If Mongo connection -> construct structured mongo object
         if (cs.startsWith('mongodb://') || cs.startsWith('mongodb+srv://')) {
           const extracted = extractCollectionAndFilter(trimmed);
           let collection = extracted.collection;
@@ -233,7 +294,6 @@ export function CodeCard({
           if (extracted.filterStr) {
             const parsed = tryParseJsonLike(extracted.filterStr);
             if (parsed !== null && (typeof parsed === 'object')) {
-              // parsed can be array or object; for filter we expect object
               if (!Array.isArray(parsed)) filter = parsed as Record<string, unknown>;
             } else {
               try {
@@ -242,7 +302,6 @@ export function CodeCard({
                   filter = parsed2 as Record<string, unknown>;
                 }
               } catch {
-                // fallback empty filter
                 filter = {};
               }
             }
@@ -258,14 +317,8 @@ export function CodeCard({
             if (fallback) collection = fallback[1];
           }
 
-          payload.mongo = {
-            collection: collection || 'default',
-            filter,
-            projection: undefined,
-            limit: maxRows
-          };
+          payload.mongo = { collection: collection || 'default', filter, projection: undefined, limit: maxRows };
         } else {
-          // SQL flow: send raw query string
           payload.query = code;
         }
       }
@@ -289,69 +342,160 @@ export function CodeCard({
     }
   };
 
+  /* ---------- Aurora visuals (direct values) ---------- */
+  const auroraCardBg = 'linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01))';
+  const auroraHeaderBg = 'rgba(255,255,255,0.02)';
+  const borderColor = '#1e293b';
+  const primaryText = '#c9d1d9';
+  const mutedText = '#94a3b8';
+  const highlight = 'linear-gradient(90deg, rgba(14,165,233,1), rgba(139,92,246,1))';
+  const successColor = '#10b981';
+  const dangerColor = '#fb7185';
+  const subtleShadow = '0 10px 30px rgba(2,8,23,0.6)';
+  const elevatedShadow = '0 18px 50px rgba(2,8,23,0.7)';
+
   return (
-    <div className="relative rounded-lg overflow-hidden my-2 shadow-sm border" style={{ background: '#0b1220' }}>
-      <div className="px-3 py-2 text-[13px] font-medium border-b" style={{ color: '#c9d1d9', background: 'rgba(255,255,255,0.02)' }}>
-        {displayLang}
+    <div
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        borderRadius: 12,
+        overflow: 'hidden',
+        margin: '10px 0',
+        transition: 'transform 180ms ease, box-shadow 180ms ease',
+        transform: hovered ? 'translateY(-4px)' : 'translateY(0)',
+        boxShadow: hovered ? elevatedShadow : subtleShadow,
+        border: `1px solid ${borderColor}`,
+        background: auroraCardBg
+      }}
+      role="region"
+      aria-label={`Code snippet (${displayLang})`}
+    >
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', background: auroraHeaderBg, borderBottom: `1px solid ${borderColor}` }}>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          <div style={{
+            padding: '6px 10px',
+            borderRadius: 999,
+            background: highlight,
+            color: '#0f172a',
+            fontWeight: 700,
+            fontSize: 12,
+            letterSpacing: 0.3,
+            boxShadow: '0 4px 14px rgba(139,92,246,0.12)'
+          }}>
+            {displayLang.toUpperCase()}
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <button
+            onClick={handleCopy}
+            aria-label="Copy code"
+            title={copied ? 'Copied' : 'Copy code'}
+            style={{
+              display: 'inline-flex',
+              gap: 8,
+              alignItems: 'center',
+              padding: '6px 8px',
+              borderRadius: 8,
+              background: hovered ? 'rgba(255,255,255,0.03)' : 'transparent',
+              color: primaryText,
+              border: 'none',
+              cursor: 'pointer',
+              transition: 'transform 120ms ease, background 120ms ease'
+            }}
+            onMouseDown={(e) => (e.currentTarget.style.transform = 'scale(0.98)')}
+            onMouseUp={(e) => (e.currentTarget.style.transform = '')}
+            onMouseLeave={(e) => (e.currentTarget.style.transform = '')}
+          >
+            {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+            <span style={{ fontSize: 12, color: mutedText }}>{copied ? 'Copied' : 'Copy'}</span>
+          </button>
+
+          <button
+            onClick={handleExecute}
+            disabled={running}
+            aria-busy={running}
+            title={running ? 'Running…' : 'Execute query'}
+            style={{
+              display: 'inline-flex',
+              gap: 8,
+              alignItems: 'center',
+              padding: '8px 10px',
+              borderRadius: 10,
+              background: running ? 'linear-gradient(90deg, rgba(14,165,233,0.14), rgba(139,92,246,0.12))' : highlight,
+              color: '#0f172a',
+              fontWeight: 700,
+              border: 'none',
+              cursor: running ? 'default' : 'pointer',
+              transition: 'transform 120ms ease, opacity 120ms ease'
+            }}
+            onMouseDown={(e) => !running && (e.currentTarget.style.transform = 'scale(0.98)')}
+            onMouseUp={(e) => (e.currentTarget.style.transform = '')}
+            onMouseLeave={(e) => (e.currentTarget.style.transform = '')}
+          >
+            {running ? (
+              <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden style={{ marginRight: 4 }}>
+                <g transform="translate(12,12)">
+                  <circle cx="0" cy="0" r="8" fill="none" stroke="rgba(15,23,42,0.14)" strokeWidth="3"></circle>
+                  <path d="M8 0 A8 8 0 0 1 0 -8" stroke="#0f172a" strokeWidth="3" strokeLinecap="round" fill="none">
+                    <animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="0.9s" repeatCount="indefinite" />
+                  </path>
+                </g>
+              </svg>
+            ) : (
+              <Play className="h-4 w-4" />
+            )}
+            <span style={{ fontSize: 13 }}>{running ? 'Running' : 'Run'}</span>
+          </button>
+        </div>
       </div>
 
-      <div className="absolute top-2 right-2 z-20 flex gap-2">
-        <button
-          onClick={handleCopy}
-          aria-label="Copy code"
-          title={copied ? 'Copied' : 'Copy code'}
-          className="inline-flex items-center gap-2 px-2 py-1 text-xs font-medium rounded-md hover:bg-white/5"
-          style={{ color: '#c9d1d9', background: 'rgba(255,255,255,0.02)' }}
-        >
-          {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-          <span className="sr-only">{copied ? 'Copied' : 'Copy code'}</span>
-        </button>
-
-        <button
-          onClick={handleExecute}
-          disabled={running}
-          aria-label="Execute query"
-          title="Execute query"
-          className="inline-flex items-center gap-2 px-2 py-1 text-xs font-medium rounded-md hover:bg-white/5"
-          style={{ color: '#c9d1d9', background: 'rgba(255,255,255,0.02)' }}
-        >
-          <Play className="h-4 w-4" />
-          <span className="sr-only">{running ? 'Running...' : 'Execute'}</span>
-        </button>
-      </div>
-
-      <pre className="p-4 m-0 overflow-x-auto text-sm" style={{ background: 'transparent' }}>
-        <code
-          ref={codeRef as React.RefObject<HTMLElement>}
-          className={languageClass + ' font-mono text-sm'}
-        >
+      {/* Code block */}
+      <pre style={{ margin: 0, padding: 16, overflowX: 'auto', background: 'transparent' }}>
+        <code ref={codeRef as React.RefObject<HTMLElement>} className={`${languageClass} font-mono`} style={{ fontSize: 13 }}>
           {code.replace(/\n$/, '')}
         </code>
       </pre>
 
-      {/* Results / Errors */}
-      <div className="p-3 border-t bg-white/3 text-sm">
-        {running && <div className="text-xs text-muted-foreground">Executing query…</div>}
-        {error && <div className="text-sm text-red-400">Error: {error}</div>}
+      {/* Results / footer */}
+      <div style={{ padding: 12, borderTop: `1px solid ${borderColor}`, background: 'rgba(255,255,255,0.01)' }}>
+        {running && <div style={{ color: mutedText, fontSize: 12, marginBottom: 8 }}>Executing query…</div>}
+
+        {error && (
+          <div style={{ color: dangerColor, fontSize: 13, marginBottom: 8 }}>
+            <strong>Error:</strong> {error}
+          </div>
+        )}
 
         {results && !results.error && (
           <div>
-            <div className="mb-2 text-xs text-muted-foreground">Source: {results.source || 'unknown'} — Rows: {results.rowCount ?? (results.rows?.length ?? 0)}</div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+              <div style={{ color: mutedText, fontSize: 12 }}>
+                Source: {results.source || 'unknown'}
+              </div>
+              <div style={{ color: mutedText, fontSize: 12 }}>
+                Rows: {results.rowCount ?? (results.rows?.length ?? 0)}
+              </div>
+            </div>
 
-            <div style={{ maxHeight: 320, overflow: 'auto' }}>
-              <table className="w-full text-xs table-fixed">
-                <thead>
+            <div style={{ maxHeight: 320, overflow: 'auto', borderRadius: 8 }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                <thead style={{ position: 'sticky', top: 0, zIndex: 10 }}>
                   <tr>
                     {(results.columns || (results.rows && results.rows[0] ? Object.keys(results.rows[0]) : [])).map((col: string) => (
-                      <th key={col} className="text-left pr-2 pb-1 sticky top-0 bg-white/3" style={{ fontWeight: 600 }}>{col}</th>
+                      <th key={col} style={{ textAlign: 'left', padding: '8px 10px', background: 'rgba(255,255,255,0.02)', fontWeight: 700, fontSize: 12 }}>
+                        {col}
+                      </th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {(results.rows || []).map((row: Record<string, unknown>, i: number) => (
-                    <tr key={i} className={i % 2 ? 'bg-white/2' : ''}>
+                    <tr key={i} style={{ background: i % 2 === 0 ? 'rgba(255,255,255,0.01)' : 'transparent' }}>
                       {(results.columns || (row ? Object.keys(row) : [])).map((col: string) => (
-                        <td key={col} className="pr-2 align-top break-words" style={{ maxWidth: 300 }}>
+                        <td key={col} style={{ padding: '8px 10px', verticalAlign: 'top', maxWidth: 360, wordBreak: 'break-word' }}>
                           {row && row[col] !== undefined && row[col] !== null ? String(row[col]) : ''}
                         </td>
                       ))}
@@ -363,7 +507,48 @@ export function CodeCard({
           </div>
         )}
 
-        {results && results.error && <div className="text-sm text-red-400">Error: {results.error}</div>}
+        {results && results.error && (
+          <div style={{ color: dangerColor, fontSize: 13 }}>
+            Error: {results.error}
+          </div>
+        )}
+
+        {/* small footer actions when results present */}
+        {results && !results.error && (
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 10 }}>
+            <button
+              onClick={() => {
+                // simple CSV download helper for visible rows
+                const rows = results.rows || [];
+                if (rows.length === 0) return;
+                const cols = results.columns || Object.keys(rows[0]);
+                const lines = [cols.join(',')].concat(rows.map(r => cols.map(c => {
+                  const v = r[c];
+                  if (v === null || v === undefined) return '';
+                  const s = String(v).replace(/"/g, '""');
+                  return `"${s}"`;
+                }).join(',')));
+                const blob = new Blob([lines.join('\n')], { type: 'text/csv' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'query-results.csv';
+                a.click();
+                URL.revokeObjectURL(url);
+              }}
+              style={{
+                padding: '8px 10px',
+                borderRadius: 8,
+                background: 'transparent',
+                border: `1px solid ${borderColor}`,
+                color: mutedText,
+                cursor: 'pointer'
+              }}
+            >
+              Export CSV
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
