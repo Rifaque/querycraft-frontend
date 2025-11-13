@@ -57,6 +57,15 @@ export function ChatHeader({ selectedModel, onModelChange, onDatabaseImport, onS
 
                   <Tooltip>
                     <TooltipTrigger asChild>
+                      <SelectItem value="gemini-2.5-flash">Gemini</SelectItem>
+                    </TooltipTrigger>
+                    <TooltipContent side="right" align="center" className="max-w-xs text-sm">
+                      <strong>Gemini</strong> — great general-purpose model with balanced speed and reasoning.
+                    </TooltipContent>
+                  </Tooltip>
+
+                  <Tooltip>
+                    <TooltipTrigger asChild>
                       <SelectItem value="mistral:7b-instruct">Mistral AI</SelectItem>
                     </TooltipTrigger>
                     <TooltipContent side="right" align="center" className="max-w-xs text-sm">

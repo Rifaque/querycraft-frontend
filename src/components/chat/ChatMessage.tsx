@@ -46,6 +46,69 @@ function parseMessageToSegments(message: string): Segment[] {
   return segments;
 }
 
+/**
+ * Render inline Markdown-like constructs inside a text block.
+ * - `**bold**`
+ * - `*italic*`
+ * - `` `inline code` ``
+ *
+ * This is intentionally small and deterministic (no external library),
+ * just enough to convert common inline patterns LLMs emit.
+ */
+function renderInlineMarkdown(text: string, keyPrefix = ''): React.ReactNode[] {
+  const nodes: React.ReactNode[] = [];
+  // Regex captures: 1=bold, 2=italic, 3=code
+  const inlineRE = /(\*\*([^*]+)\*\*)|(\*([^*]+)\*)|(`([^`]+)`)/g;
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+  let idx = 0;
+
+  while ((match = inlineRE.exec(text)) !== null) {
+    const matchIndex = match.index;
+    if (matchIndex > lastIndex) {
+      nodes.push(
+        <span key={`${keyPrefix}-t-${idx++}`}>{text.slice(lastIndex, matchIndex)}</span>
+      );
+    }
+
+    if (match[1]) {
+      // **bold**
+      nodes.push(
+        <strong key={`${keyPrefix}-b-${idx++}`}>{match[2]}</strong>
+      );
+    } else if (match[3]) {
+      // *italic*
+      nodes.push(
+        <em key={`${keyPrefix}-i-${idx++}`}>{match[4]}</em>
+      );
+    } else if (match[5]) {
+      // `code`
+      nodes.push(
+        <code
+          key={`${keyPrefix}-c-${idx++}`}
+          style={{
+            backgroundColor: 'rgba(148,163,184,0.12)',
+            padding: '0.06rem 0.3rem',
+            borderRadius: 4,
+            fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", "Courier New", monospace',
+            fontSize: '0.92em',
+          }}
+        >
+          {match[6]}
+        </code>
+      );
+    }
+
+    lastIndex = inlineRE.lastIndex;
+  }
+
+  if (lastIndex < text.length) {
+    nodes.push(<span key={`${keyPrefix}-t-${idx++}`}>{text.slice(lastIndex)}</span>);
+  }
+
+  return nodes;
+}
+
 export function ChatMessage({ message, isUser, timestamp }: ChatMessageProps) {
   const segments = parseMessageToSegments(message);
 
@@ -93,10 +156,14 @@ export function ChatMessage({ message, isUser, timestamp }: ChatMessageProps) {
           {/* Render mixed segments: text and code cards */}
           {segments.map((seg, i) => {
             if (seg.type === 'text') {
-              // plain text: preserve newlines and spacing
+              // plain text: preserve newlines and spacing, but also render inline MD (bold, italic, inline code)
               return (
-                <p key={i} className="whitespace-pre-wrap break-words" style={{ margin: 0, color: secondaryFg }}>
-                  {seg.content}
+                <p
+                  key={i}
+                  className="whitespace-pre-wrap break-words"
+                  style={{ margin: 0, color: secondaryFg }}
+                >
+                  {renderInlineMarkdown(seg.content, `seg-${i}`)}
                 </p>
               );
             }
