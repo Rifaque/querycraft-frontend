@@ -141,10 +141,10 @@ export default function Home() {
     toast("Successfully logged out");
   };
 
-  const handleUpdateProfile = (profile: UserProfile) => {
-    setUserProfile(profile);
-    toast.success("Profile updated successfully");
-  };
+  // const handleUpdateProfile = (profile: UserProfile) => {
+  //   setUserProfile(profile);
+  //   toast.success("Profile updated successfully");
+  // };
 
   if (loading) return <div className="flex h-screen items-center justify-center">Loading...</div>;
 

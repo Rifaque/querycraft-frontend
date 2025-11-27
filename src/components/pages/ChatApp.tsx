@@ -302,7 +302,6 @@ export function ChatApp({ userProfile, onLogout }: ChatAppProps) {
         console.error('Load chats error', err);
       }
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // When user clicks "New chat" — behave exactly like clicking the QueryCraft header:

@@ -90,8 +90,6 @@ export function SettingsDialog({
       const sizeInKB = (dataSize / 1024).toFixed(2);
       return `${sizeInKB} KB`;
     } catch (error) {
-      // keep console error for debugging
-      // eslint-disable-next-line no-console
       console.error(error);
       return '0 KB';
     }

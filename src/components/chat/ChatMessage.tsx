@@ -113,8 +113,6 @@ export function ChatMessage({ message, isUser, timestamp }: ChatMessageProps) {
   const segments = parseMessageToSegments(message);
 
   // Aurora palette (direct values)
-  const primaryBg = '#f8fafc'; // light-on-dark bubble
-  const primaryFg = '#0f172a'; // dark text on primary
   const secondaryBg = '#1e293b'; // slate/blue-gray bubble for bot
   const secondaryFg = '#f8fafc'; // bot text color
   const mutedText = '#94a3b8';

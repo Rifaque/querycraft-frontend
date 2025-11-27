@@ -11,7 +11,6 @@ import {
   Sparkles,
   Github,
   Play,
-  Star,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Canvas } from "@react-three/fiber";
@@ -205,6 +204,7 @@ export default function IntroPageV2({ onShowAuth }: { onShowAuth?: () => void })
       setResult(output);
     } catch (err) {
       setResult("-- error running demo --");
+      console.error("Demo error:", err);
     } finally {
       // clear both state and re-entrancy lock
       setIsTyping(false);
