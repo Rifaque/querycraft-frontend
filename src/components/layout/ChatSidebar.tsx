@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from "react";
-import { MessageSquare, Trash2, Plus, X, User, LogOut, Settings, LogIn } from "lucide-react";
+import { MessageSquare, Trash2, Plus, X, LogOut, Settings, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 // import { Badge } from "@/components/ui/badge";
@@ -11,8 +11,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator
+  DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 
 interface Message {

@@ -7,12 +7,26 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 
 // --- Types for SpeechRecognition ---
+
+interface SpeechRecognitionAlternativeLike {
+  transcript: string;
+}
+
+interface SpeechRecognitionResultLike {
+  0: SpeechRecognitionAlternativeLike;
+  length: number;
+}
+
+interface SpeechRecognitionEventLike {
+  results: ArrayLike<SpeechRecognitionResultLike>;
+}
+
 interface SpeechRecognitionLike {
   lang: string;
   continuous: boolean;
   interimResults: boolean;
-  onresult: ((event: any) => void) | null;
-  onerror: ((event: any) => void) | null;
+  onresult: ((event: SpeechRecognitionEventLike) => void) | null;
+  onerror: ((event: unknown) => void) | null;
   onend: (() => void) | null;
   start: () => void;
   stop: () => void;
@@ -64,9 +78,10 @@ export function ChatInput({ onSendMessage, disabled = false }: ChatInputProps) {
     recognition.continuous = false;
     recognition.interimResults = false; // final result only
 
-    recognition.onresult = (event: any) => {
-      const transcript = Array.from(event.results as ArrayLike<any>)
-        .map((r: any) => r[0].transcript)
+    recognition.onresult = (event: SpeechRecognitionEventLike) => {
+      const resultsArray = Array.from(event.results);
+      const transcript = resultsArray
+        .map((result) => result[0].transcript)
         .join(" ");
 
       const base = baseMessageRef.current.trim();
