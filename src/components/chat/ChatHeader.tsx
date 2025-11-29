@@ -92,6 +92,51 @@ export function ChatHeader({ selectedModel, onModelChange, onDatabaseImport, onS
                     </TooltipContent>
                   </Tooltip>
 
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <SelectItem value="or-deepseek-r1">DeepSeek R1</SelectItem>
+                    </TooltipTrigger>
+                    <TooltipContent side="right" align="center" className="max-w-xs text-sm">
+                      <strong>DeepSeek R1</strong> — larger and more capable with a bigger context window.
+                    </TooltipContent>
+                  </Tooltip>
+
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <SelectItem value="or-grok-code-fast">Grok Code Fast</SelectItem>
+                    </TooltipTrigger>
+                    <TooltipContent side="right" align="center" className="max-w-xs text-sm">
+                      <strong>Grok Code Fast</strong> — optimized for code understanding and generation; ideal for database query tasks.
+                    </TooltipContent> 
+                  </Tooltip>
+
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <SelectItem value="or-grok-4.1-fast">Grok 4.1 Fast</SelectItem>
+                    </TooltipTrigger>
+                    <TooltipContent side="right" align="center" className="max-w-xs text-sm">
+                      <strong>Grok 4.1 Fast</strong> — powerful general-purpose model with strong reasoning capabilities.
+                    </TooltipContent>
+                  </Tooltip>
+
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <SelectItem value="or-qwen3-235b-a22b">Qwen3 235B A22B</SelectItem>
+                    </TooltipTrigger>
+                    <TooltipContent side="right" align="center" className="max-w-xs text-sm">
+                      <strong>Qwen3 235B A22B</strong> — state-of-the-art model with extensive knowledge and advanced reasoning.
+                    </TooltipContent>
+                  </Tooltip>
+
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <SelectItem value="or-qwen3-coder">Qwen3 Coder</SelectItem>
+                    </TooltipTrigger>
+                    <TooltipContent side="right" align="center" className="max-w-xs text-sm">
+                      <strong>Qwen3 Coder</strong> — specialized for coding tasks, excellent for generating and understanding database queries.
+                    </TooltipContent>
+                  </Tooltip>
+                
                 </TooltipProvider>
               </SelectContent>
             </Select>
