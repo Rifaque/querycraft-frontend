@@ -50,11 +50,9 @@ export default function Home() {
         const res = await fetch(`${API_BASE}/api/auth/me`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        console.log("response:", res);
 
         if (res.ok) {
           const data = await res.json();
-          console.log(data);
           setUserProfile(prev => ({
             ...prev,
             name: data.name ?? prev.name,

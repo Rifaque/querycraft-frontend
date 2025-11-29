@@ -46,6 +46,7 @@ export function ChatHeader({ selectedModel, onModelChange, onDatabaseImport, onS
               </SelectTrigger>
               <SelectContent>
                 <TooltipProvider>
+
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <SelectItem value="qwen:4b">Qwen AI</SelectItem>
@@ -66,12 +67,31 @@ export function ChatHeader({ selectedModel, onModelChange, onDatabaseImport, onS
 
                   <Tooltip>
                     <TooltipTrigger asChild>
+                      <SelectItem value="phi3-mini">Phi-3 Mini</SelectItem>
+                    </TooltipTrigger>
+                    <TooltipContent side="right" align="center" className="max-w-xs text-sm">
+                      <strong>Phi-3 Mini (4K instruct)</strong> — very efficient small model with good quality and low latency.
+                    </TooltipContent>
+                  </Tooltip>
+
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <SelectItem value="llama3.2:1b">Llama 1B</SelectItem>
+                    </TooltipTrigger>
+                    <TooltipContent side="right" align="center" className="max-w-xs text-sm">
+                      <strong>Llama (1B)</strong> — very efficient small model with good quality and low latency.
+                    </TooltipContent>
+                  </Tooltip>
+
+                  <Tooltip>
+                    <TooltipTrigger asChild>
                       <SelectItem value="mistral:7b-instruct">Mistral AI</SelectItem>
                     </TooltipTrigger>
                     <TooltipContent side="right" align="center" className="max-w-xs text-sm">
                       <strong>Mistral (7B)</strong> — larger and more capable with a bigger context window; slightly slower but better for complex prompts.
                     </TooltipContent>
                   </Tooltip>
+
                 </TooltipProvider>
               </SelectContent>
             </Select>
