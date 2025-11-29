@@ -259,6 +259,21 @@ export function CodeCard({
     }
   };
 
+  const dbTypeFromConnection = (cs?: string): string | undefined => {
+    if (!cs) return undefined;
+
+    const lowered = cs.toLowerCase();
+    if (lowered.startsWith('mongodb://') || lowered.startsWith('mongodb+srv://')) return 'mongodb';
+    if (lowered.startsWith('postgres://') || lowered.startsWith('postgresql://')) return 'postgresql';
+    if (lowered.startsWith('mysql://')) return 'mysql';
+    if (lowered.startsWith('mariadb://')) return 'mariadb';
+    if (lowered.startsWith('mssql://') || lowered.startsWith('sqlserver://')) return 'mssql';
+    if (lowered.startsWith('sqlite://') || lowered.startsWith('file:')) return 'sqlite';
+    if (lowered.startsWith('neo4j://') || lowered.startsWith('bolt://')) return 'neo4j';
+    return undefined;
+  };
+
+
   const handleExecute = async () => {
     setResults(null);
     setError(null);
@@ -277,9 +292,13 @@ export function CodeCard({
 
     setRunning(true);
     try {
-      const payload: Record<string, unknown> = { sourceType: sourceInfo?.sourceType || 'connection', maxRows };
+            const payload: Record<string, unknown> = {
+        sourceType: sourceInfo?.sourceType || 'connection',
+        maxRows
+      };
 
       if (sourceInfo?.sourceType === 'file' && sourceInfo.fileId) {
+        // File-backed execution: just send the raw query (SQL / Mongo / CSV-backed SQL, etc.)
         payload.fileId = sourceInfo.fileId;
         payload.query = code;
       } else {
@@ -291,9 +310,15 @@ export function CodeCard({
         if (!cs || typeof cs !== 'string') {
           throw new Error('No data source available. Upload a file or save a connection string first.');
         }
+
         payload.connectionString = cs;
+        const dbType = dbTypeFromConnection(cs);
+        if (dbType) {
+          payload.dbType = dbType; // optional hint for the backend
+        }
 
         if (cs.startsWith('mongodb://') || cs.startsWith('mongodb+srv://')) {
+          // --- MongoDB path: build a { mongo: { collection, filter, ... } } payload ---
           const extracted = extractCollectionAndFilter(trimmed);
           let collection = extracted.collection;
           let filter: Record<string, unknown> = {};
@@ -324,11 +349,18 @@ export function CodeCard({
             if (fallback) collection = fallback[1];
           }
 
-          payload.mongo = { collection: collection || 'default', filter, projection: undefined, limit: maxRows };
+          payload.mongo = {
+            collection: collection || 'default',
+            filter,
+            projection: undefined,
+            limit: maxRows
+          };
         } else {
+          // --- SQL / Postgres / MySQL / other non-Mongo DBs: send raw query string ---
           payload.query = code;
         }
       }
+
 
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
       if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
