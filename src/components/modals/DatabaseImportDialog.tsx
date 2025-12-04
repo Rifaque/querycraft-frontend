@@ -92,6 +92,14 @@ export function DatabaseImportDialog({ open, onOpenChange, onImport }: DatabaseI
       setLoading(true);
       try {
         const uploadResp = await uploadFileToServer(selectedFile);
+
+        // <-- Save last uploaded file id so CodeCard or other UI can auto-use it
+        try {
+          localStorage.setItem('qc_last_uploaded_file', uploadResp.file.id);
+        } catch (e) {
+          console.error('Failed to save last uploaded file id to localStorage', e);
+        }
+
         setSuccessMsg('File uploaded successfully');
         onImport(uploadResp);
       } catch (err: unknown) {
@@ -102,6 +110,7 @@ export function DatabaseImportDialog({ open, onOpenChange, onImport }: DatabaseI
         setSelectedFile(null);
       }
     } else {
+      // existing connection branch unchanged...
       const cs = connectionString.trim();
       if (!cs) {
         setError('Connection string is empty');

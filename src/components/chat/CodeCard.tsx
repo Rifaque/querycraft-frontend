@@ -292,7 +292,7 @@ export function CodeCard({
 
     setRunning(true);
     try {
-            const payload: Record<string, unknown> = {
+      const payload: Record<string, unknown> = {
         sourceType: sourceInfo?.sourceType || 'connection',
         maxRows
       };
@@ -379,6 +379,31 @@ export function CodeCard({
     } finally {
       setRunning(false);
     }
+  };
+
+  // type guard: safe check for { name: string | number } without using `any`
+  function hasName(obj: unknown): obj is { name: string | number } {
+    if (obj === null || typeof obj !== 'object') return false;
+    const rec = obj as Record<string, unknown>;
+    if (!('name' in rec)) return false;
+    const val = rec['name'];
+    return typeof val === 'string' || typeof val === 'number';
+  }
+
+  const formatCell = (val: unknown) => {
+    if (val === null || val === undefined) return '';
+    if (typeof val === 'string' || typeof val === 'number' || typeof val === 'boolean') return String(val);
+    if (Array.isArray(val)) {
+      return <pre style={{ margin: 0, fontSize: 12, whiteSpace: 'pre-wrap' }}>{JSON.stringify(val, null, 2)}</pre>;
+    }
+    if (typeof val === 'object') {
+      // use the type guard instead of `any`
+      if (hasName(val)) {
+        return String(val.name);
+      }
+      return <pre style={{ margin: 0, fontSize: 12, whiteSpace: 'pre-wrap' }}>{JSON.stringify(val, null, 2)}</pre>;
+    }
+    return String(val);
   };
 
   /* ---------- Aurora visuals (direct values) ---------- */
@@ -532,16 +557,63 @@ export function CodeCard({
                 <tbody>
                   {(results.rows || []).map((row: Record<string, unknown>, i: number) => (
                     <tr key={i} style={{ background: i % 2 === 0 ? 'rgba(255,255,255,0.01)' : 'transparent' }}>
-                      {(results.columns || (row ? Object.keys(row) : [])).map((col: string) => (
-                        <td key={col} style={{ padding: '8px 10px', verticalAlign: 'top', maxWidth: 360, wordBreak: 'break-word' }}>
-                          {row && row[col] !== undefined && row[col] !== null ? String(row[col]) : ''}
-                        </td>
-                      ))}
+                      {(results.columns || (row ? Object.keys(row) : [])).map((col: string) => {
+                        const v = row ? row[col] : undefined;
+                        return (
+                          <td key={col} style={{ padding: '8px 10px', verticalAlign: 'top', maxWidth: 360, wordBreak: 'break-word' }}>
+                            {formatCell(v)}
+                          </td>
+                        );
+                      })}
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
+
+            {/* small footer actions when results present */}
+            {results && !results.error && (
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 10 }}>
+                <button
+                  onClick={() => {
+                    // CSV export: convert object/array cells to JSON strings
+                    const rows = results.rows || [];
+                    if (rows.length === 0) return;
+                    const cols = results.columns || Object.keys(rows[0]);
+
+                    const lines = [cols.join(',')].concat(rows.map(r => cols.map(c => {
+                      const v = r[c];
+                      if (v === null || v === undefined) return '';
+                      if (typeof v === 'object') {
+                        // JSON-stringify and escape quotes for CSV
+                        const s = JSON.stringify(v).replace(/"/g, '""');
+                        return `"${s}"`;
+                      }
+                      const s = String(v).replace(/"/g, '""');
+                      return `"${s}"`;
+                    }).join(',')));
+
+                    const blob = new Blob([lines.join('\n')], { type: 'text/csv' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'query-results.csv';
+                    a.click();
+                    URL.revokeObjectURL(url);
+                  }}
+                  style={{
+                    padding: '8px 10px',
+                    borderRadius: 8,
+                    background: 'transparent',
+                    border: `1px solid ${borderColor}`,
+                    color: mutedText,
+                    cursor: 'pointer'
+                  }}
+                >
+                  Export CSV
+                </button>
+              </div>
+            )}
           </div>
         )}
 
@@ -552,7 +624,7 @@ export function CodeCard({
         )}
 
         {/* small footer actions when results present */}
-        {results && !results.error && (
+        {/* {results && !results.error && (
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 10 }}>
             <button
               onClick={() => {
@@ -586,7 +658,7 @@ export function CodeCard({
               Export CSV
             </button>
           </div>
-        )}
+        )} */}
       </div>
     </div>
   );
