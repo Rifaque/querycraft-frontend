@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from "react";
-import { Upload, FileText, Database } from "lucide-react";
+import { Upload, Database } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
@@ -49,7 +49,7 @@ function extractErrorMessage(err: unknown): string {
 }
 
 export function DatabaseImportDialog({ open, onOpenChange, onImport }: DatabaseImportDialogProps) {
-  const [importMethod, setImportMethod] = useState<'file' | 'connection'>('file');
+  const [importMethod, setImportMethod] = useState<'connection' | 'file'>('connection');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [connectionString, setConnectionString] = useState("");
 
@@ -92,6 +92,14 @@ export function DatabaseImportDialog({ open, onOpenChange, onImport }: DatabaseI
       setLoading(true);
       try {
         const uploadResp = await uploadFileToServer(selectedFile);
+
+        // <-- Save last uploaded file id so CodeCard or other UI can auto-use it
+        try {
+          localStorage.setItem('qc_last_uploaded_file', uploadResp.file.id);
+        } catch (e) {
+          console.error('Failed to save last uploaded file id to localStorage', e);
+        }
+
         setSuccessMsg('File uploaded successfully');
         onImport(uploadResp);
       } catch (err: unknown) {
@@ -102,6 +110,7 @@ export function DatabaseImportDialog({ open, onOpenChange, onImport }: DatabaseI
         setSelectedFile(null);
       }
     } else {
+      // existing connection branch unchanged...
       const cs = connectionString.trim();
       if (!cs) {
         setError('Connection string is empty');
@@ -155,9 +164,9 @@ export function DatabaseImportDialog({ open, onOpenChange, onImport }: DatabaseI
         </DialogHeader>
 
         <div className="space-y-6 py-4">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3">
             {/* Upload File card */}
-            <Card
+            {/* <Card
               className="cursor-pointer transition-all"
               onClick={() => {
                 setImportMethod('file');
@@ -178,7 +187,7 @@ export function DatabaseImportDialog({ open, onOpenChange, onImport }: DatabaseI
                   SQL, CSV, JSON, SQLite
                 </span>
               </CardContent>
-            </Card>
+            </Card> */}
 
             {/* Connect DB card */}
             <Card
