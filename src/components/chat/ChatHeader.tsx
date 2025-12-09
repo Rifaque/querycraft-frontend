@@ -49,6 +49,15 @@ export function ChatHeader({ selectedModel, onModelChange, onDatabaseImport, onS
 
                   <Tooltip>
                     <TooltipTrigger asChild>
+                      <SelectItem value="auto">Auto</SelectItem>
+                    </TooltipTrigger>
+                    <TooltipContent side="right" align="center" className="max-w-xs text-sm">
+                      <strong>Auto</strong> — automatically selects the best model based on your database and query complexity.
+                    </TooltipContent>
+                  </Tooltip>
+
+                  <Tooltip>
+                    <TooltipTrigger asChild>
                       <SelectItem value="qwen:4b">Qwen AI</SelectItem>
                     </TooltipTrigger>
                     <TooltipContent side="right" align="center" className="max-w-xs text-sm">
@@ -108,15 +117,6 @@ export function ChatHeader({ selectedModel, onModelChange, onDatabaseImport, onS
                     <TooltipContent side="right" align="center" className="max-w-xs text-sm">
                       <strong>Grok Code Fast</strong> — optimized for code understanding and generation; ideal for database query tasks.
                     </TooltipContent> 
-                  </Tooltip>
-
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <SelectItem value="or-grok-4.1-fast">Grok 4.1 Fast</SelectItem>
-                    </TooltipTrigger>
-                    <TooltipContent side="right" align="center" className="max-w-xs text-sm">
-                      <strong>Grok 4.1 Fast</strong> — powerful general-purpose model with strong reasoning capabilities.
-                    </TooltipContent>
                   </Tooltip>
 
                   <Tooltip>
