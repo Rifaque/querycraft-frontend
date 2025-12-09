@@ -49,7 +49,7 @@ function extractErrorMessage(err: unknown): string {
 }
 
 export function DatabaseImportDialog({ open, onOpenChange, onImport }: DatabaseImportDialogProps) {
-  const [importMethod, setImportMethod] = useState<'file' | 'connection'>('file');
+  const [importMethod, setImportMethod] = useState<'connection' | 'file'>('connection');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [connectionString, setConnectionString] = useState("");
 
@@ -164,9 +164,9 @@ export function DatabaseImportDialog({ open, onOpenChange, onImport }: DatabaseI
         </DialogHeader>
 
         <div className="space-y-6 py-4">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3">
             {/* Upload File card */}
-            <Card
+            {/* <Card
               className="cursor-pointer transition-all"
               onClick={() => {
                 setImportMethod('file');
@@ -187,7 +187,7 @@ export function DatabaseImportDialog({ open, onOpenChange, onImport }: DatabaseI
                   SQL, CSV, JSON, SQLite
                 </span>
               </CardContent>
-            </Card>
+            </Card> */}
 
             {/* Connect DB card */}
             <Card
